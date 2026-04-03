@@ -1,11 +1,14 @@
 # TODO
 
 
-- [ ] EDA Clotho
-- [ ] EDA STARSS
-- [ ] Set up baseline models for SELD
-- [ ] Set up baseline models for Language-Based Audio Retrieval
-- [ ] Download and preprocess datasets
-- [ ] Implement training pipeline
-- [ ] Experiment tracking & evaluation
+03/04/2026
 
+
+[ ] Read baseline
+    - [ ] Task 3
+    - [ ] Task 6
+[ ] Run experiment dataset:
+    - Cloth-Moment
+
+  
+Note: Task 3 have no experimental dataset.
