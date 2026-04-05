@@ -1,5 +1,6 @@
 #!/bin/bash
-# Script to initialize and pull the latest code for git submodules
+# Script to initialize and pull the latest code for git submodules,
+# and automatically ensure they are placed in the vendors/ directory.
 
 # Exit on any error
 set -e
@@ -8,8 +9,28 @@ set -e
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
-echo "Fetching latest changes from the repository..."
+echo "Fetching latest changes from the main repository..."
 git pull
+
+# Automatically detect and move any submodules that are not inside vendors/
+if [ -f .gitmodules ]; then
+    echo "Checking submodule paths..."
+    # Read all submodule paths
+    while read -r path; do
+        if [[ -n "$path" && "$path" != vendors/* ]]; then
+            echo ">> Found submodule in root: '$path'"
+            echo ">> Automatically moving it to 'vendors/$path'..."
+            mkdir -p vendors
+            
+            # If the user just added the submodule, it might need init first
+            git submodule update --init "$path" >/dev/null 2>&1 || true
+            
+            # Safely move it using git mv
+            git mv "$path" "vendors/$path"
+            echo ">> Moved successfully! (Note: You should commit this restructuring)"
+        fi
+    done < <(git config --file .gitmodules --get-regexp 'submodule\..*\.path' | awk '{print $2}' || true)
+fi
 
 echo "Initializing and updating submodules to their registered commits..."
 git submodule update --init --recursive
