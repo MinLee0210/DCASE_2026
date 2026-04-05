@@ -4,3 +4,6 @@
 [submodule "DCASE2026_Task3_SAISELD_baseline"]
 	path = DCASE2026_Task3_SAISELD_baseline
 	url = https://github.com/iranroman/DCASE2026_Task3_SAISELD_baseline.git
+[submodule "dcase2026_task4_baseline"]
+	path = dcase2026_task4_baseline
+	url = https://github.com/nttcslab/dcase2026_task4_baseline.git
