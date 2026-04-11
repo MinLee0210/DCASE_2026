@@ -13,4 +13,3 @@ Text auto-augmentation for audio-text retrieval.
 5. Back Translation: Translate the text to another language and then back to the original language to create a paraphrased version.
 6. Contextual Augmentation: Use a language model to generate new sentences based on the original text, ensuring that the meaning is preserved while introducing variability.
 """
-
