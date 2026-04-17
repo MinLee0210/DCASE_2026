@@ -26,8 +26,8 @@ if [ -f .gitmodules ]; then
             git submodule update --init "$path" >/dev/null 2>&1 || true
             
             # Safely move it using git mv
-            git mv "$path" "vendors/$path"
-            echo ">> Moved successfully! (Note: You should commit this restructuring)"
+            # git mv "$path" "vendors/$path"
+            # echo ">> Moved successfully! (Note: You should commit this restructuring)"
         fi
     done < <(git config --file .gitmodules --get-regexp 'submodule\..*\.path' | awk '{print $2}' || true)
 fi

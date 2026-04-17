@@ -1,9 +1,0 @@
-[submodule "dcase2026_task6_baseline"]
-	path = vendors/dcase2026_task6_baseline
-	url = https://github.com/awkrail/dcase2026_task6_baseline.git
-[submodule "DCASE2026_Task3_SAISELD_baseline"]
-	path = vendors/DCASE2026_Task3_SAISELD_baseline
-	url = https://github.com/iranroman/DCASE2026_Task3_SAISELD_baseline.git
-[submodule "dcase2026_task4_baseline"]
-	path = vendors/dcase2026_task4_baseline
-	url = https://github.com/nttcslab/dcase2026_task4_baseline.git

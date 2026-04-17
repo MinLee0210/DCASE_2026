@@ -4,11 +4,8 @@ Repository for participating in the [DCASE 2026 Challenge](https://dcase.communi
 
 ## 🎯 Target Tasks
 
-### Task: Sound Event Localization and Detection (SELD)
-Stereo sound event localization and detection in real-world video content. The goal is to detect sound events and estimate their spatial locations from audio (and optionally visual) input.
+Task: Noise-aware Unsupervised Anomalous Sound Detection for Machine Condition Monitoring
 
-### Task: Language-Based Audio Retrieval
-Retrieve audio clips from a database given a free-form natural language text query. This task bridges the gap between language understanding and audio content analysis.
 
 ## 📁 Project Structure
 
@@ -16,8 +13,6 @@ Retrieve audio clips from a database given a free-form natural language text que
 DCASE2026/
 ├── notebooks/          # EDA & experimentation notebooks
 ├── reference/          # Reference papers & literature
-│   ├── SELD/           # SELD-related papers
-│   └── LANGUAGE_AUDIO_RETRIEVAL/  # Audio retrieval papers
 ├── .env                # Environment variables (not tracked)
 ├── .gitignore
 └── README.md
