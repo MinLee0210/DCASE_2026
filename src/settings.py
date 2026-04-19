@@ -15,3 +15,6 @@ class Settings:
     """
     Pipeline settings:
     """
+
+
+settings = Settings()
