@@ -1,6 +1,7 @@
-from torchmetrics.functional import signal_noise_ratio as snr
-import torch
 from itertools import combinations, permutations
+
+import torch
+from torchmetrics.functional import signal_noise_ratio as snr
 
 
 class S5ClassAwareMetric:

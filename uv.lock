@@ -735,8 +735,10 @@ dependencies = [
     { name = "datasets" },
     { name = "easydict" },
     { name = "einops" },
+    { name = "hear21passt" },
     { name = "ipykernel" },
     { name = "ipywidgets" },
+    { name = "isort" },
     { name = "librosa" },
     { name = "matplotlib" },
     { name = "nbstripout" },
@@ -767,8 +769,10 @@ requires-dist = [
     { name = "datasets", specifier = ">=4.8.4" },
     { name = "easydict", specifier = ">=1.13" },
     { name = "einops", specifier = ">=0.8.2" },
+    { name = "hear21passt", specifier = ">=0.0.26" },
     { name = "ipykernel", specifier = ">=7.2.0" },
     { name = "ipywidgets", specifier = ">=8.1.8" },
+    { name = "isort", specifier = ">=8.0.1" },
     { name = "librosa", specifier = ">=0.11.0" },
     { name = "matplotlib", specifier = ">=3.10.8" },
     { name = "nbstripout", specifier = ">=0.9.1" },
@@ -1041,6 +1045,19 @@ wheels = [
 ]
 
 [[package]]
+name = "hear21passt"
+version = "0.0.26"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "timm" },
+    { name = "torchaudio" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9e/4d/53efcc38f947303fc52547c0bbcbfe8a0d0dec5abb8217bd377dfb65430d/hear21passt-0.0.26.tar.gz", hash = "sha256:9aa91cef4ca6468d9075092a9c377b09270b5a59dfa83ecdd4ce9ea92c8c8431", size = 23681 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/9d/d14d332d831125ff9aab91df8dec4f2707219e9136b6d1dc77cf8a7dae89/hear21passt-0.0.26-py3-none-any.whl", hash = "sha256:a3a7377604c6d829369111ab26a86fc5dd40154ec611b8fa5819ecaa6b252550", size = 33541 },
+]
+
+[[package]]
 name = "hf-xet"
 version = "1.4.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1257,6 +1274,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/4c/ae/c5ce1edc1afe042eadb445e95b0671b03cee61895264357956e61c0d2ac0/ipywidgets-8.1.8.tar.gz", hash = "sha256:61f969306b95f85fba6b6986b7fe45d73124d1d9e3023a8068710d47a22ea668", size = 116739 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/56/6d/0d9848617b9f753b87f214f1c682592f7ca42de085f564352f10f0843026/ipywidgets-8.1.8-py3-none-any.whl", hash = "sha256:ecaca67aed704a338f88f67b1181b58f821ab5dc89c1f0f5ef99db43c1c2921e", size = 139808 },
+]
+
+[[package]]
+name = "isort"
+version = "8.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ef/7c/ec4ab396d31b3b395e2e999c8f46dec78c5e29209fac49d1f4dace04041d/isort-8.0.1.tar.gz", hash = "sha256:171ac4ff559cdc060bcfff550bc8404a486fee0caab245679c2abe7cb253c78d", size = 769592 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/95/c7c34aa53c16353c56d0b802fba48d5f5caa2cdee7958acbcb795c830416/isort-8.0.1-py3-none-any.whl", hash = "sha256:28b89bc70f751b559aeca209e6120393d43fbe2490de0559662be7a9787e3d75", size = 89733 },
 ]
 
 [[package]]

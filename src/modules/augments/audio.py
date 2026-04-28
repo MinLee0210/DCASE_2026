@@ -1,9 +1,8 @@
 import os
 import random
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, Union
 
 import pandas as pd
-
 import torch
 import torchaudio
 from torch.utils.data import Dataset
@@ -31,7 +30,9 @@ class AudioAugmentor:
             waveform = aug(waveform)
         return waveform
 
-    def add_noise(self, waveform, snr_db_range=(15, 40)):
+    def add_noise(
+        self, waveform: torch.Tensor, snr_db_range: tuple[float, float] = (15, 40)
+    ) -> torch.Tensor:
         snr_db = random.uniform(*snr_db_range)
         noise = torch.randn_like(waveform)
         signal_power = waveform.norm(p=2)
@@ -41,25 +42,31 @@ class AudioAugmentor:
         scale = signal_power / (10 ** (snr_db / 20) * noise_power)
         return waveform + scale * noise
 
-    def random_gain(self, waveform, min_db=-6, max_db=6):
+    def random_gain(
+        self, waveform: torch.Tensor, min_db: float = -6, max_db: float = 6
+    ) -> torch.Tensor:
         gain_db = random.uniform(min_db, max_db)
         return waveform * (10 ** (gain_db / 20))
 
-    def time_shift(self, waveform, max_shift=0.1):
+    def time_shift(
+        self, waveform: torch.Tensor, max_shift: float = 0.1
+    ) -> torch.Tensor:
         shift = int(waveform.shape[-1] * random.uniform(-max_shift, max_shift))
         return torch.roll(waveform, shifts=shift, dims=-1)
 
-    def polarity_inversion(self, waveform):
+    def polarity_inversion(self, waveform: torch.Tensor) -> torch.Tensor:
         return -waveform if random.random() > 0.5 else waveform
 
-    def speed_perturb(self, waveform, factor_range=(0.95, 1.05)):
+    def speed_perturb(
+        self, waveform: torch.Tensor, factor_range: tuple[float, float] = (0.95, 1.05)
+    ) -> torch.Tensor:
         factor = random.uniform(*factor_range)
         resampled = torchaudio.functional.resample(
             waveform, orig_freq=self.sr, new_freq=int(self.sr * factor)
         )
         return resampled
 
-    def spec_augment_on_waveform(self, waveform):
+    def spec_augment_on_waveform(self, waveform: torch.Tensor) -> torch.Tensor:
         """Apply small random zero-out segments (simplified SpecAugment on waveform)."""
         clip_fraction = random.uniform(0.0, 0.05)
         clip_len = int(waveform.shape[-1] * clip_fraction)
@@ -73,7 +80,7 @@ class AudioAugmentor:
 class TextAugmentor:
     """Safe text augmentations for audio-text retrieval (meaning-preserving)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.templates = [
             "{caption}",
             "The sound of {caption_lower}",
@@ -94,14 +101,14 @@ class TextAugmentor:
         )
         return aug(caption)
 
-    def identity(self, caption):
+    def identity(self, caption: str) -> str:
         return caption
 
-    def template_wrap(self, caption):
+    def template_wrap(self, caption: str) -> str:
         template = random.choice(self.templates)
         return template.format(caption=caption, caption_lower=caption.lower())
 
-    def light_synonym_replace(self, caption, n=1):
+    def light_synonym_replace(self, caption: str, n: int = 1) -> str:
         """Replace 1 word with a simple synonym (no NLTK dependency)."""
         # Lightweight synonyms for common audio description words
         synonyms = {
@@ -226,7 +233,7 @@ class ClothoDataset(Dataset):
 
         return waveform  # shape: (1, max_samples)
 
-    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
+    def __getitem__(self, idx: int) -> Dict[str, Union[torch.Tensor, str]]:
         row = self.data.iloc[idx]
         file_name = row["file_name"]
         caption = row["caption"]
