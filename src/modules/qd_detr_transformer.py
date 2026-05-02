@@ -27,6 +27,15 @@ class MLP(nn.Module):
 
 
 def inverse_sigmoid(x, eps=1e-3):
+    """Applies inverse sigmoid transformation to the input tensor.
+
+    Args:
+        x (torch.Tensor): Input tensor.
+        eps (float): Small value for numerical stability.
+
+    Returns:
+        torch.Tensor: Inverse sigmoid of x.
+    """
     x = x.clamp(min=0, max=1)
     x1 = x.clamp(min=eps)
     x2 = (1 - x).clamp(min=eps)
@@ -34,6 +43,14 @@ def inverse_sigmoid(x, eps=1e-3):
 
 
 def gen_sineembed_for_position(pos_tensor):
+    """Generates sine embeddings for position tensors.
+
+    Args:
+        pos_tensor (torch.Tensor): Position tensor.
+
+    Returns:
+        torch.Tensor: Sine embeddings.
+    """
     # n_query, bs, _ = pos_tensor.size()
     # sineembed_tensor = torch.zeros(n_query, bs, 256)
     scale = 2 * math.pi
@@ -75,6 +92,26 @@ class Transformer(nn.Module):
         modulate_t_attn=True,
         bbox_embed_diff_each_layer=False,
     ):
+        """Initializes the Transformer model.
+
+        Args:
+            d_model (int): Model dimension.
+            nhead (int): Number of attention heads.
+            num_queries (int): Number of queries.
+            num_encoder_layers (int): Number of encoder layers.
+            num_decoder_layers (int): Number of decoder layers.
+            dim_feedforward (int): Feedforward dimension.
+            dropout (float): Dropout rate.
+            activation (str): Activation function.
+            normalize_before (bool): Whether to normalize before.
+            return_intermediate_dec (bool): Whether to return intermediate decoder outputs.
+            query_dim (int): Query dimension.
+            keep_query_pos (bool): Whether to keep query position.
+            query_scale_type (str): Query scale type.
+            num_patterns (int): Number of patterns.
+            modulate_t_attn (bool): Whether to modulate temporal attention.
+            bbox_embed_diff_each_layer (bool): Whether bbox embed differs each layer.
+        """
         super().__init__()
 
         t2v_encoder_layer = T2V_TransformerEncoderLayer(
@@ -127,6 +164,7 @@ class Transformer(nn.Module):
         self.num_patterns = num_patterns
 
     def _reset_parameters(self):
+        """Resets the parameters of the model."""
         for p in self.parameters():
             if p.dim() > 1:
                 nn.init.xavier_uniform_(p)
@@ -181,6 +219,14 @@ class Transformer(nn.Module):
 
 class TransformerEncoder(nn.Module):
     def __init__(self, encoder_layer, num_layers, norm=None, return_intermediate=False):
+        """Initializes the TransformerEncoder.
+
+        Args:
+            encoder_layer: Encoder layer module.
+            num_layers (int): Number of layers.
+            norm: Normalization layer.
+            return_intermediate (bool): Whether to return intermediate outputs.
+        """
         super().__init__()
         self.layers = _get_clones(encoder_layer, num_layers)
         self.num_layers = num_layers
@@ -195,6 +241,18 @@ class TransformerEncoder(nn.Module):
         pos: Optional[Tensor] = None,
         **kwargs,
     ):
+        """Forward pass through the TransformerEncoder.
+
+        Args:
+            src (torch.Tensor): Source tensor.
+            mask (Optional[Tensor]): Mask tensor.
+            src_key_padding_mask (Optional[Tensor]): Key padding mask.
+            pos (Optional[Tensor]): Position tensor.
+            **kwargs: Additional arguments.
+
+        Returns:
+            torch.Tensor: Output tensor.
+        """
         output = src
 
         intermediate = []
@@ -390,6 +448,16 @@ class TransformerEncoderLayerThin(nn.Module):
         activation="relu",
         normalize_before=False,
     ):
+        """Initializes the TransformerEncoderLayerThin.
+
+        Args:
+            d_model (int): Model dimension.
+            nhead (int): Number of heads.
+            dim_feedforward (int): Feedforward dimension.
+            dropout (float): Dropout rate.
+            activation (str): Activation function.
+            normalize_before (bool): Whether to normalize before.
+        """
         super().__init__()
         self.self_attn = nn.MultiheadAttention(d_model, nhead, dropout=dropout)
         # Implementation of Feedforward model
@@ -404,6 +472,15 @@ class TransformerEncoderLayerThin(nn.Module):
         self.normalize_before = normalize_before
 
     def with_pos_embed(self, tensor, pos: Optional[Tensor]):
+        """Adds positional embedding to the tensor.
+
+        Args:
+            tensor (torch.Tensor): Input tensor.
+            pos (Optional[Tensor]): Positional embedding.
+
+        Returns:
+            torch.Tensor: Tensor with positional embedding.
+        """
         return tensor if pos is None else tensor + pos
 
     def forward_post(
@@ -946,10 +1023,27 @@ class TransformerDecoderLayerThin(nn.Module):
 
 
 def _get_clones(module, N):
+    """Creates N clones of the module.
+
+    Args:
+        module: Module to clone.
+        N (int): Number of clones.
+
+    Returns:
+        nn.ModuleList: List of cloned modules.
+    """
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
 
 
 def build_transformer(args):
+    """Builds the transformer model.
+
+    Args:
+        args: Configuration arguments.
+
+    Returns:
+        Transformer: The transformer model.
+    """
     return Transformer(
         d_model=args.hidden_dim,
         dropout=args.dropout,

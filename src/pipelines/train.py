@@ -43,6 +43,12 @@ logging.basicConfig(
 
 
 def set_seed(seed, use_cuda=True):
+    """Sets the random seed.
+
+    Args:
+        seed (int): Seed.
+        use_cuda (bool): Use cuda.
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -51,6 +57,16 @@ def set_seed(seed, use_cuda=True):
 
 
 def train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i):
+    """Trains for one epoch.
+
+    Args:
+        model: Model.
+        criterion: Criterion.
+        train_loader: Train loader.
+        optimizer: Optimizer.
+        opt: Options.
+        epoch_i (int): Epoch index.
+    """
     logger.info(f"[Epoch {epoch_i + 1}]")
     model.train()
     criterion.train()
@@ -96,6 +112,17 @@ def train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i):
 
 
 def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset, opt):
+    """Trains the model.
+
+    Args:
+        model: Model.
+        criterion: Criterion.
+        optimizer: Optimizer.
+        lr_scheduler: LR scheduler.
+        train_dataset: Train dataset.
+        val_dataset: Val dataset.
+        opt: Options.
+    """
     opt.train_log_txt_formatter = "{time_str} [Epoch] {epoch:03d} [Loss] {loss_str}\n"
     opt.eval_log_txt_formatter = "{time_str} [Epoch] {epoch:03d} [Loss] {loss_str} [Metrics] {eval_metrics_str}\n"
     save_submission_filename = "latest_{}_val_preds.jsonl".format(opt.dset_name)
@@ -148,6 +175,12 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
 
 
 def main(opt, resume=None):
+    """Main function.
+
+    Args:
+        opt: Options.
+        resume: Resume path.
+    """
     logger.info("Setup config, data and model...")
     set_seed(opt.seed)
 

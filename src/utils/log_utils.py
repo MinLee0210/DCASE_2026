@@ -58,13 +58,13 @@ class WandbLogger:
         log_dict = {f"{prefix}/{k}": v for k, v in metrics.items()}
 
         # Log to W&B
-        wandb.log(log_dict, step=step)
+        self.run.log(log_dict, step=step)
 
         # Optional: Track Best Metric Logic
         if "accuracy" in metrics:
             if metrics["accuracy"] > self.best_accuracy:
                 self.best_accuracy = metrics["accuracy"]
-                wandb.run.summary["best_accuracy"] = self.best_accuracy
+                self.run.summary["best_accuracy"] = self.best_accuracy
                 print(f"New best accuracy: {self.best_accuracy:.4f}")
 
     def log_artifact(self, model_path, name="model-checkpoint"):

@@ -50,6 +50,17 @@ class PostProcessorDETR:
         move_window_method="center",
         process_func_names=("clip_window_l", "clip_ts", "round_multiple"),
     ):
+        """Initializes the PostProcessorDETR.
+
+        Args:
+            clip_length (int): Length of each clip.
+            min_ts_val (float): Minimum timestamp value.
+            max_ts_val (float): Maximum timestamp value.
+            min_w_l (float): Minimum window length.
+            max_w_l (float): Maximum window length.
+            move_window_method (str): Method to move window.
+            process_func_names (tuple): Names of processing functions.
+        """
         self.clip_length = clip_length
         self.min_ts_val = min_ts_val
         self.max_ts_val = max_ts_val
@@ -63,6 +74,14 @@ class PostProcessorDETR:
         )
 
     def __call__(self, lines):
+        """Processes the prediction lines.
+
+        Args:
+            lines (list): List of prediction lines.
+
+        Returns:
+            list: Processed lines.
+        """
         processed_lines = []
         for line in tqdm(
             lines, desc=f"convert to multiples of clip_length={self.clip_length}"

@@ -44,6 +44,22 @@ class StartEndDataset(Dataset):
         span_loss_type: str = "l1",
         load_labels: bool = True,
     ) -> None:
+        """Initializes the StartEndDataset.
+
+        Args:
+            data_path (str): Path to the data file.
+            a_feat_dir (str): Directory for audio features.
+            q_feat_dir (str): Directory for query features.
+            q_feat_type (str): Type of query features.
+            a_feat_type (str): Type of audio features.
+            max_q_l (int): Maximum query length.
+            max_a_l (int): Maximum audio length.
+            ctx_mode (str): Context mode.
+            clip_len (int): Clip length.
+            max_windows (int): Maximum number of windows.
+            span_loss_type (str): Type of span loss.
+            load_labels (bool): Whether to load labels.
+        """
         self.data_path = data_path
         self.a_feat_dir = a_feat_dir
         self.q_feat_dir = q_feat_dir
@@ -73,9 +89,22 @@ class StartEndDataset(Dataset):
         return datalist
 
     def __len__(self) -> int:
+        """Returns the length of the dataset.
+
+        Returns:
+            int: Length of the dataset.
+        """
         return len(self.data)
 
     def __getitem__(self, index: int) -> Dict[str, Any]:
+        """Gets the item at the given index.
+
+        Args:
+            index (int): Index.
+
+        Returns:
+            Dict[str, Any]: Item data.
+        """
         meta = self.data[index]
 
         model_inputs = dict()
@@ -85,17 +114,29 @@ class StartEndDataset(Dataset):
         model_inputs["audio_feat"] = self._get_audio_feat_by_vid(meta["vid"])
         ctx_l = len(model_inputs["audio_feat"])
 
+        # if self.use_tef:
+        #     tef_st = torch.arange(0, ctx_l, 1.0) / ctx_l
+        #     tef_ed = tef_st + 1.0 / ctx_l
+        #     tef = torch.stack([tef_st, tef_ed], dim=1)  # (Lv, 2)
+        #     model_inputs["audio_feat"] = torch.cat(
+        #         [model_inputs["audio_feat"], tef], dim=1
+        #     )
+
         if self.use_tef:
-            tef_st = torch.arange(0, ctx_l, 1.0) / ctx_l
-            tef_ed = tef_st + 1.0 / ctx_l
-            tef = torch.stack([tef_st, tef_ed], dim=1)  # (Lv, 2)
+            duration = meta["duration"]  # Total video duration in seconds
+            clip_indices = torch.arange(0, ctx_l, 1.0)  # [0, 1, 2, ..., ctx_l-1]
+            tef_st = (clip_indices * self.clip_len) / duration  # Normalized start times
+            tef_ed = (
+                (clip_indices + 1) * self.clip_len
+            ) / duration  # Normalized end times
+            tef_ed = torch.clamp(tef_ed, max=1.0)  # Ensure it doesn't exceed 1.0
+            tef = torch.stack([tef_st, tef_ed], dim=1)  # (ctx_l, 2)
             model_inputs["audio_feat"] = torch.cat(
                 [model_inputs["audio_feat"], tef], dim=1
             )
-
         if self.load_labels:
             model_inputs["span_labels"] = self.get_span_labels(
-                meta["relevant_windows"], ctx_l
+                meta["relevant_windows"], ctx_l, meta["duration"]
             )
             (
                 model_inputs["saliency_pos_labels"],
@@ -106,39 +147,6 @@ class StartEndDataset(Dataset):
             )
 
         return dict(meta=meta, model_inputs=model_inputs)
-
-    def get_pos_mask(self, meta: Dict[str, Any], ctx_l: int) -> torch.Tensor:
-        # necessary only for TR-DETR: model_inputs["pos_mask"]
-        if "relevant_clip_ids" in meta:
-            pos_idx = torch.tensor(meta["relevant_clip_ids"])
-        else:
-            # TODO: Implemented pos_mask for MR/HD tasks for TR-DETR, but I could not reproduce the reported scores
-            clip_start_ind = math.floor(meta["relevant_windows"][0][0] / self.clip_len)
-            clip_end_ind = math.ceil(meta["relevant_windows"][0][1] / self.clip_len)
-            if clip_start_ind == clip_end_ind:
-                clip_end_ind += 1  # to avoid a bug
-            pos_idx = torch.tensor([i for i in range(clip_start_ind, clip_end_ind)])
-
-        mask = torch.zeros_like(torch.ones(ctx_l))
-        if pos_idx.max() >= len(mask):
-            new_mask = torch.zeros_like(torch.ones(pos_idx.max() + 1))
-            new_mask[pos_idx] = 1
-            new_mask[: len(mask)] = mask
-            mask = new_mask
-        else:
-            mask[pos_idx] = 1
-
-        if self.dset_name in [
-            "charades",
-            "tacos",
-            "activitynet",
-            "clotho-moment",
-            "unav100-subset",
-            "tut2017",
-        ]:
-            mask = mask[:ctx_l]
-
-        return mask
 
     def get_saliency_labels_sub_as_query(
         self, gt_window: List[float], ctx_l: int, max_n: int = 2
@@ -241,127 +249,9 @@ class StartEndDataset(Dataset):
         neg_clip_indices = hard_neg_clip_indices + easy_neg_clip_indices
         return pos_clip_indices, neg_clip_indices
 
-    def get_saliency_labels_all(
-        self,
-        rel_clip_ids: List[int],
-        scores: List[List[float]],
-        ctx_l: int,
-        max_n: int = 1,
-        add_easy_negative: bool = True,
-    ) -> Tuple[List[int], List[int], np.ndarray]:
-        """Sum the scores from the three annotations, then take the two clips with the
-        maximum scores as positive, and two with the minimum scores as negative.
-        Args:
-            rel_clip_ids: list(int), list of relevant clip ids
-            scores: list([anno1_score, anno2_score, anno3_score]),
-            ctx_l: int
-            max_n: int, #clips to use as positive and negative, for easy and hard negative, respectively.
-            add_easy_negative: bool, if True, sample eay negative outside the relevant_clip_ids.
-        """
-        # indices inside rel_clip_ids
-        scores = np.array(scores)  # (#rel_clips, 3)
-        agg_scores = np.sum(scores, 1)  # (#rel_clips, )
-        sort_indices = np.argsort(agg_scores)  # increasing
-
-        # score_array = [min(agg_scores[idx], ctx_l-1) for idx in range(ctx_l)]
-        score_array = np.zeros(ctx_l)
-        for idx in range(len(rel_clip_ids)):
-            if rel_clip_ids[idx] >= ctx_l:
-                score_array_new = np.zeros(ctx_l + 1)
-                score_array_new[:ctx_l] = score_array
-                score_array = score_array_new
-            # if rel_clip_ids[idx] == ctx_l:
-            #     print(rel_clip_ids[idx], ctx_l)
-            score_array[rel_clip_ids[idx]] = agg_scores[idx]
-
-        # indices in the whole video
-        # the min(_, ctx_l-1) here is incorrect, but should not cause
-        # much troubles since this should be rarely used.
-        hard_pos_clip_indices = [
-            min(rel_clip_ids[idx], ctx_l - 1) for idx in sort_indices[-max_n:]
-        ]
-        hard_neg_clip_indices = [
-            min(rel_clip_ids[idx], ctx_l - 1) for idx in sort_indices[:max_n]
-        ]
-        easy_pos_clip_indices = []
-        easy_neg_clip_indices = []
-        if add_easy_negative:
-            easy_neg_pool = list(set(range(ctx_l)) - set(rel_clip_ids))
-            if len(easy_neg_pool) >= max_n:
-                easy_pos_clip_indices = random.sample(rel_clip_ids, k=max_n)
-                easy_neg_clip_indices = random.sample(easy_neg_pool, k=max_n)
-            else:  # copy the hard ones
-                easy_pos_clip_indices = hard_pos_clip_indices
-                easy_neg_clip_indices = hard_neg_clip_indices
-
-        pos_clip_indices = hard_pos_clip_indices + easy_pos_clip_indices
-        neg_clip_indices = hard_neg_clip_indices + easy_neg_clip_indices
-        return pos_clip_indices, neg_clip_indices, score_array
-
-    def get_saliency_labels_all_tvsum(
-        self,
-        labels: np.ndarray,
-        ctx_l: int,
-        max_n: int = 1,
-        add_easy_negative: bool = False,
-    ) -> Tuple[List[int], List[int], np.ndarray]:
-
-        agg_scores = np.sum(labels - np.ones_like(labels), axis=-1)[
-            :ctx_l
-        ]  # start from 1, so minus 1
-        score_array = agg_scores / 80 * 12
-        sort_indices = np.argsort(agg_scores)  # increasing
-
-        hard_pos_clip_indices = [min(idx, ctx_l - 1) for idx in sort_indices[-max_n:]]
-        hard_neg_clip_indices = [min(idx, ctx_l - 1) for idx in sort_indices[:max_n]]
-        easy_pos_clip_indices = []
-        easy_neg_clip_indices = []
-        if add_easy_negative:
-            easy_neg_pool = list(set(range(ctx_l)))
-            if len(easy_neg_pool) >= max_n:
-                easy_pos_clip_indices = random.sample(rel_clip_ids, k=max_n)
-                easy_neg_clip_indices = random.sample(easy_neg_pool, k=max_n)
-            else:  # copy the hard ones
-                easy_pos_clip_indices = hard_pos_clip_indices
-                easy_neg_clip_indices = hard_neg_clip_indices
-
-        pos_clip_indices = hard_pos_clip_indices + easy_pos_clip_indices
-        neg_clip_indices = hard_neg_clip_indices + easy_neg_clip_indices
-
-        return pos_clip_indices, neg_clip_indices, score_array
-
-    def get_saliency_labels_all_youtube(
-        self,
-        labels: List[List[float]],
-        ctx_l: int,
-        max_n: int = 1,
-        add_easy_negative: bool = False,
-    ) -> Tuple[List[int], List[int], np.ndarray]:
-        # Youtube-hl only have binary score
-        agg_scores = np.array(labels)[:, 0]  # (L, 1) --> (L, )
-        score_array = agg_scores * 1
-
-        sort_indices = np.argsort(agg_scores)  # increasing
-
-        hard_pos_clip_indices = [min(idx, ctx_l - 1) for idx in sort_indices[-max_n:]]
-        hard_neg_clip_indices = [min(idx, ctx_l - 1) for idx in sort_indices[:max_n]]
-        easy_pos_clip_indices = []
-        easy_neg_clip_indices = []
-        if add_easy_negative:
-            easy_neg_pool = list(set(range(ctx_l)))
-            if len(easy_neg_pool) >= max_n:
-                easy_pos_clip_indices = random.sample(rel_clip_ids, k=max_n)
-                easy_neg_clip_indices = random.sample(easy_neg_pool, k=max_n)
-            else:  # copy the hard ones
-                easy_pos_clip_indices = hard_pos_clip_indices
-                easy_neg_clip_indices = hard_neg_clip_indices
-
-        pos_clip_indices = hard_pos_clip_indices + easy_pos_clip_indices
-        neg_clip_indices = hard_neg_clip_indices + easy_neg_clip_indices
-
-        return pos_clip_indices, neg_clip_indices, score_array
-
-    def get_span_labels(self, windows: List[List[float]], ctx_l: int) -> torch.Tensor:
+    def get_span_labels(
+        self, windows: List[List[float]], ctx_l: int, duration: float
+    ) -> torch.Tensor:
         """
         windows: list([st, ed]) in seconds. E.g. [[26, 36]], corresponding st_ed clip_indices [[13, 17]] (inclusive)
             Note a maximum of `self.max_windows` windows are used.
@@ -371,9 +261,7 @@ class StartEndDataset(Dataset):
             random.shuffle(windows)
             windows = windows[: self.max_windows]
         if self.span_loss_type == "l1":
-            windows = torch.Tensor(windows) / (
-                ctx_l * self.clip_len
-            )  # normalized windows in xx
+            windows = torch.Tensor(windows) / duration  # normalized windows in xx
             windows = span_xx_to_cxw(windows)  # normalized windows in cxw
         elif self.span_loss_type == "ce":
             windows = torch.Tensor(
@@ -390,11 +278,27 @@ class StartEndDataset(Dataset):
         return windows
 
     def _get_query_feat_by_qid(self, qid: int) -> np.ndarray:
+        """Gets query features by qid.
+
+        Args:
+            qid (int): Query id.
+
+        Returns:
+            np.ndarray: Query features.
+        """
         q_feat_path = join(self.q_feat_dir, f"qid{qid}.npz")
         q_feat = np.load(q_feat_path)["last_hidden_state"]
         return q_feat
 
     def _get_audio_feat_by_vid(self, vid: str) -> torch.Tensor:
+        """Gets audio features by vid.
+
+        Args:
+            vid (str): Video id.
+
+        Returns:
+            torch.Tensor: Audio features.
+        """
         _feat_path = join(self.a_feat_dir, f"{vid}.npz")
         _feat = np.load(_feat_path)["features"][: self.max_a_l].astype(np.float32)
         _feat = l2_normalize_np_array(_feat)
@@ -404,6 +308,14 @@ class StartEndDataset(Dataset):
 def start_end_collate(
     batch: List[Dict[str, Any]],
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """Collates the batch for start end dataset.
+
+    Args:
+        batch (List[Dict[str, Any]]): Batch.
+
+    Returns:
+        Tuple[List[Dict[str, Any]], Dict[str, Any]]: Batch meta, batched data.
+    """
     batch_meta = [e["meta"] for e in batch]
 
     model_inputs_keys = batch[0]["model_inputs"].keys()
@@ -446,6 +358,16 @@ def prepare_batch_inputs(
     device: torch.device,
     non_blocking: bool = False,
 ) -> Tuple[Dict[str, torch.Tensor], Optional[Dict[str, Any]]]:
+    """Prepares batch inputs.
+
+    Args:
+        batched_model_inputs (Dict[str, Any]): Batched model inputs.
+        device (torch.device): Device.
+        non_blocking (bool): Non blocking.
+
+    Returns:
+        Tuple[Dict[str, torch.Tensor], Optional[Dict[str, Any]]]: Model inputs, targets.
+    """
     model_inputs = dict(
         src_txt=batched_model_inputs["query_feat"][0].to(
             device, non_blocking=non_blocking

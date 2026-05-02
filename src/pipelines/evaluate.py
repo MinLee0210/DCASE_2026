@@ -39,6 +39,17 @@ logging.basicConfig(
 
 
 def eval_epoch_post_processing(submission, opt, gt_data, save_submission_filename):
+    """Evaluates epoch with post processing.
+
+    Args:
+        submission: Submission.
+        opt: Options.
+        gt_data: Ground truth data.
+        save_submission_filename: Filename.
+
+    Returns:
+        tuple: metrics, latest_file_paths
+    """
     logger.info("Saving/Evaluating before nms results")
     submission_path = os.path.join(opt.results_dir, save_submission_filename)
     save_jsonl(submission, submission_path)
@@ -59,6 +70,17 @@ def eval_epoch_post_processing(submission, opt, gt_data, save_submission_filenam
 
 @torch.no_grad()
 def compute_mr_results(model, eval_loader, opt, criterion=None):
+    """Computes MR results.
+
+    Args:
+        model: Model.
+        eval_loader: Eval loader.
+        opt: Options.
+        criterion: Criterion.
+
+    Returns:
+        tuple: mr_res, loss_meters
+    """
     batch_input_fn = (
         cg_detr_prepare_batch_inputs
         if opt.model_name == "cg_detr"
@@ -135,6 +157,18 @@ def get_eval_res(model, eval_loader, opt, criterion):
 
 
 def eval_epoch(model, eval_dataset, opt, save_submission_filename, criterion):
+    """Evaluates epoch.
+
+    Args:
+        model: Model.
+        eval_dataset: Eval dataset.
+        opt: Options.
+        save_submission_filename: Filename.
+        criterion: Criterion.
+
+    Returns:
+        tuple: metrics, eval_loss_meters, latest_file_paths
+    """
     logger.info("Generate submissions")
     model.eval()
     criterion.eval()
@@ -174,6 +208,11 @@ def setup_model(opt):
 
 
 def start_inference(opt):
+    """Starts inference.
+
+    Args:
+        opt: Options.
+    """
     logger.info("Setup config, data and model...")
 
     # dataset & data loader

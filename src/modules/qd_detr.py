@@ -11,6 +11,15 @@ from misc import accuracy
 
 
 def inverse_sigmoid(x, eps=1e-3):
+    """Applies inverse sigmoid transformation to the input tensor.
+
+    Args:
+        x (torch.Tensor): Input tensor.
+        eps (float): Small value for numerical stability.
+
+    Returns:
+        torch.Tensor: Inverse sigmoid of x.
+    """
     x = x.clamp(min=0, max=1)
     x1 = x.clamp(min=eps)
     x2 = (1 - x).clamp(min=eps)
@@ -430,6 +439,14 @@ class SetCriterion(nn.Module):
         return {"loss_saliency": loss_saliency}
 
     def _get_src_permutation_idx(self, indices):
+        """Permutes predictions following the given indices.
+
+        Args:
+            indices: List of tuples (src, tgt) indices.
+
+        Returns:
+            tuple: batch_idx, src_idx
+        """
         # permute predictions following indices
         batch_idx = torch.cat(
             [torch.full_like(src, i) for i, (src, _) in enumerate(indices)]
@@ -438,6 +455,14 @@ class SetCriterion(nn.Module):
         return batch_idx, src_idx  # two 1D tensors of the same length
 
     def _get_tgt_permutation_idx(self, indices):
+        """Permutes targets following the given indices.
+
+        Args:
+            indices: List of tuples (src, tgt) indices.
+
+        Returns:
+            tuple: batch_idx, tgt_idx
+        """
         # permute targets following indices
         batch_idx = torch.cat(
             [torch.full_like(tgt, i) for i, (_, tgt) in enumerate(indices)]
@@ -446,6 +471,18 @@ class SetCriterion(nn.Module):
         return batch_idx, tgt_idx
 
     def get_loss(self, loss, outputs, targets, indices, **kwargs):
+        """Retrieves the loss function for the given loss type.
+
+        Args:
+            loss (str): Type of loss.
+            outputs: Model outputs.
+            targets: Ground truth targets.
+            indices: Matched indices.
+            **kwargs: Additional arguments.
+
+        Returns:
+            dict: Loss values.
+        """
         loss_map = {
             "spans": self.loss_spans,
             "labels": self.loss_labels,
@@ -504,6 +541,14 @@ class MLP(nn.Module):
         )
 
     def forward(self, x):
+        """Forward pass through the MLP.
+
+        Args:
+            x (torch.Tensor): Input tensor.
+
+        Returns:
+            torch.Tensor: Output tensor.
+        """
         for i, layer in enumerate(self.layers):
             x = F.relu(layer(x)) if i < self.num_layers - 1 else layer(x)
         return x
@@ -532,6 +577,14 @@ class LinearLayer(nn.Module):
 
 
 def build_model(args):
+    """Builds the QD-DETR model and criterion.
+
+    Args:
+        args: Configuration arguments.
+
+    Returns:
+        tuple: model, criterion
+    """
     # the `num_classes` naming here is somewhat misleading.
     # it indeed corresponds to `max_obj_id + 1`, where max_obj_id
     # is the maximum id for a class in your dataset. For example,
