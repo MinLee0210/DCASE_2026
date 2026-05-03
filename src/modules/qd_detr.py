@@ -3,11 +3,12 @@ import torch.nn.functional as F
 import numpy as np
 from torch import nn
 
-from span_utils import generalized_temporal_iou, span_cxw_to_xx
-from matcher import build_matcher
-from qd_detr_transformer import build_transformer
-from position_encoding import build_position_encoding
-from misc import accuracy
+from src.utils.span_utils import generalized_temporal_iou, span_cxw_to_xx
+from src.matcher import build_matcher
+from src.modules.qd_detr_transformer import build_transformer
+from src.modules.position_encoding.base import build_position_encoding
+from src.utils.misc import accuracy
+from src.modules.attention.cross_modal_fusion import CrossModalFusionBlock
 
 
 def inverse_sigmoid(x, eps=1e-3):
@@ -133,6 +134,12 @@ class QDDETR(nn.Module):
         self.hidden_dim = hidden_dim
         self.global_rep_token = torch.nn.Parameter(torch.randn(hidden_dim))
         self.global_rep_pos = torch.nn.Parameter(torch.randn(hidden_dim))
+        self.cross_modal_fusion = CrossModalFusionBlock(
+            d_model=hidden_dim,
+            nhead=8,
+            num_layers=2,  # start with 1~3
+            dropout=input_dropout,
+        )
 
     def forward(self, src_txt, src_txt_mask, src_aud, src_aud_mask):
         """The forward expects two tensors:
@@ -153,18 +160,26 @@ class QDDETR(nn.Module):
         """
         src_aud = self.input_aud_proj(src_aud)
         src_txt = self.input_txt_proj(src_txt)
-        src = torch.cat([src_aud, src_txt], dim=1)  # (bsz, L_aud+L_txt, d)
-        mask = torch.cat(
-            [src_aud_mask, src_txt_mask], dim=1
-        ).bool()  # (bsz, L_aud+L_txt)
-        pos_aud = self.position_embed(src_aud, src_aud_mask)  # (bsz, L_aud, d)
+
+        # === NEW CROSS-MODAL FUSION ===
+        fused_feat = self.cross_modal_fusion(
+            src_aud,
+            src_txt,
+            audio_mask=src_aud_mask.bool(),
+            text_mask=src_txt_mask.bool(),
+        )
+
+        # Now use fused_feat instead of concatenation
+        src = fused_feat
+        mask = torch.cat([src_aud_mask, src_txt_mask], dim=1).bool()
+
+        # Position embedding (you can still use your current one or upgrade to RoPE later)
+        pos_aud = self.position_embed(src_aud, src_aud_mask)
         pos_txt = (
             self.txt_position_embed(src_txt)
             if self.use_txt_pos
             else torch.zeros_like(src_txt)
-        )  # (bsz, L_txt, d)
-        # pos_txt = torch.zeros_like(src_txt)
-        # pad zeros for txt positions
+        )
         pos = torch.cat([pos_aud, pos_txt], dim=1)
         # (#layers, bsz, #queries, d), (bsz, L_aud+L_txt, d)
 

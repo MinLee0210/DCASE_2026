@@ -13,6 +13,7 @@ dependencies = [
     "ipywidgets>=8.1.8",
     "isort>=8.0.1",
     "librosa>=0.11.0",
+    "mamba-ssm>=2.3.1",
     "matplotlib>=3.10.8",
     "nbstripout>=0.9.1",
     "nltk>=3.9.4",

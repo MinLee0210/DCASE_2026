@@ -19,18 +19,18 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from config import BaseOptions
-from dataset import StartEndDataset, start_end_collate, prepare_batch_inputs
-from evaluate import eval_epoch, start_inference, setup_model
+from src.config import BaseOptions
+from src.dataset import StartEndDataset, start_end_collate, prepare_batch_inputs
+from src.pipelines.evaluate import eval_epoch, start_inference, setup_model
 
-from basic_utils import (
+from src.utils.basic_utils import (
     AverageMeter,
     dict_to_markdown,
     write_log,
     save_checkpoint,
     rename_latest_to_best,
 )
-from model_utils import count_parameters, ModelEMA
+from src.utils.model_utils import count_parameters, ModelEMA
 
 import logging
 

@@ -7,12 +7,12 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import torch
 import torch.nn as nn
-from basic_utils import l2_normalize_np_array, load_jsonl
-from span_utils import span_xx_to_cxw
-from tensor_utils import pad_sequences_1d
+from src.utils.basic_utils import l2_normalize_np_array, load_jsonl
+from src.utils.span_utils import span_xx_to_cxw
+from src.utils.tensor_utils import pad_sequences_1d
 from torch.utils.data import Dataset
 from tqdm import tqdm
-from vocab import Vocab
+from src.vocab import Vocab
 
 logger = logging.getLogger(__name__)
 
