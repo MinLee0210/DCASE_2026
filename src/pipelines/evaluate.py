@@ -26,7 +26,7 @@ from postprocessing import PostProcessorDETR
 from standalone_eval.eval import eval_submission
 
 from basic_utils import save_jsonl, save_json
-from qd_detr import build_model as build_model_qd_detr
+from src.modules.qd_detr import build_model as build_model_qd_detr
 
 import logging
 
