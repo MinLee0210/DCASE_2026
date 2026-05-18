@@ -210,7 +210,7 @@ __marimo__/
 # Added by cargo
 /target
 
-
+.DS_Store
 
 /reference
 
