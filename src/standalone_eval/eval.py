@@ -375,8 +375,8 @@ def eval_submission(submission, ground_truth, verbose=True, match_number=True):
     gt_qids = set([e["qid"] for e in ground_truth])
     if match_number:
         assert pred_qids == gt_qids, (
-            f"qids in ground_truth and submission must match. "
-            f"use `match_number=False` if you wish to disable this check"
+            "qids in ground_truth and submission must match. "
+            "use `match_number=False` if you wish to disable this check"
         )
     else:  # only leave the items that exists in both submission and ground_truth
         shared_qids = pred_qids.intersection(gt_qids)

@@ -214,6 +214,6 @@ __marimo__/
 
 /reference
 
-data/
+dataset/
 configs/baseline/*
 archived/

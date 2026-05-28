@@ -36,18 +36,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-"""
-Copied from MMAction2
-https://github.com/open-mmlab/mmaction2/blob/master/mmaction/core/evaluation/eval_detection.py
-"""
 import json
 import numpy as np
 from sklearn.metrics import precision_recall_curve
 
+"""
+Copied from MMAction2
+https://github.com/open-mmlab/mmaction2/blob/master/mmaction/core/evaluation/eval_detection.py
+"""
+
 
 def load_jsonl(filename):
     with open(filename, "r") as f:
-        return [json.loads(l.strip("\n")) for l in f.readlines()]
+        return [json.loads(line.strip("\n")) for line in f.readlines()]
 
 
 def compute_temporal_iou_batch_paired(pred_windows, gt_windows):

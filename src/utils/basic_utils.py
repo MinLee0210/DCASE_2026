@@ -3,9 +3,8 @@ import json
 import zipfile
 import numpy as np
 import pickle
-import time
 import torch
-from collections import OrderedDict, Counter
+from collections import OrderedDict
 import pandas as pd
 from pathlib import Path
 from typing import Any, Dict, Union
@@ -55,7 +54,7 @@ def save_json(data, filename, save_pretty=False, sort_keys=False):
 
 def load_jsonl(filename):
     with open(filename, "r") as f:
-        return [json.loads(l.strip("\n")) for l in f.readlines()]
+        return [json.loads(line.strip("\n")) for line in f.readlines()]
 
 
 def save_jsonl(data, filename):
@@ -79,9 +78,9 @@ def mkdirp(p):
         os.makedirs(p)
 
 
-def flat_list_of_lists(l):
+def flat_list_of_lists(nested_list):
     """flatten a list of lists [[1,2], [3,4]] to [1,2,3,4]"""
-    return [item for sublist in l for item in sublist]
+    return [item for sublist in nested_list for item in sublist]
 
 
 def convert_to_seconds(hms_time):

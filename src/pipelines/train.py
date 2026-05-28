@@ -1,6 +1,4 @@
 import os
-import time
-import json
 import pprint
 import random
 import argparse
@@ -19,17 +17,16 @@ import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.config import BaseOptions
-from src.dataset import StartEndDataset, start_end_collate, prepare_batch_inputs
-from src.pipelines.evaluate import eval_epoch, start_inference, setup_model
+from src.core.config import BaseOptions
+from src.data.dataset import StartEndDataset, start_end_collate, prepare_batch_inputs
+from src.pipelines.evaluate import eval_epoch, setup_model
 
 from src.utils.basic_utils import (
     AverageMeter,
-    dict_to_markdown,
-    write_log,
     save_checkpoint,
     rename_latest_to_best,
 )
+from src.utils.log_utils import write_log
 from src.utils.model_utils import count_parameters, ModelEMA
 
 import logging
@@ -56,7 +53,7 @@ def set_seed(seed, use_cuda=True):
         torch.cuda.manual_seed_all(seed)
 
 
-def train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i):
+def train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i, scaler=None):
     """Trains for one epoch.
 
     Args:
@@ -66,6 +63,7 @@ def train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i):
         optimizer: Optimizer.
         opt: Options.
         epoch_i (int): Epoch index.
+        scaler: GradScaler for AMP. Defaults to None.
     """
     logger.info(f"[Epoch {epoch_i + 1}]")
     model.train()
@@ -74,31 +72,47 @@ def train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i):
     # init meters
     loss_meters = defaultdict(AverageMeter)
 
+    use_amp = opt.get("use_amp", False)
+    device_type = "cuda" if "cuda" in str(opt.device) else ("mps" if "mps" in str(opt.device) else "cpu")
+    
+    # Configure autocast keyword args
+    autocast_kwargs = {"device_type": device_type, "enabled": use_amp}
+    if device_type in ["cpu", "mps"]:
+        autocast_kwargs["dtype"] = torch.bfloat16
+
     num_training_examples = len(train_loader)
-    timer_dataloading = time.time()
     for batch_idx, batch in tqdm(
         enumerate(train_loader), desc="Training Iteration", total=num_training_examples
     ):
         model_inputs, targets = prepare_batch_inputs(batch[1], opt.device)
 
-        outputs = (
-            model(**model_inputs, targets=targets)
-            if opt.model_name == "cg_detr"
-            else model(**model_inputs)
-        )
-        loss_dict = criterion(outputs, targets)
-        losses = sum(
-            loss_dict[k] * criterion.weight_dict[k]
-            for k in loss_dict.keys()
-            if k in criterion.weight_dict
-        )
-
         optimizer.zero_grad()
-        losses.backward()
 
-        if opt.grad_clip > 0:
-            nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip)
-        optimizer.step()
+        with torch.amp.autocast(**autocast_kwargs):
+            outputs = (
+                model(**model_inputs, targets=targets)
+                if opt.model_name == "cg_detr"
+                else model(**model_inputs)
+            )
+            loss_dict = criterion(outputs, targets)
+            losses = sum(
+                loss_dict[k] * criterion.weight_dict[k]
+                for k in loss_dict.keys()
+                if k in criterion.weight_dict
+            )
+
+        if scaler is not None:
+            scaler.scale(losses).backward()
+            if opt.grad_clip > 0:
+                scaler.unscale_(optimizer)
+                nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip)
+            scaler.step(optimizer)
+            scaler.update()
+        else:
+            losses.backward()
+            if opt.grad_clip > 0:
+                nn.utils.clip_grad_norm_(model.parameters(), opt.grad_clip)
+            optimizer.step()
 
         loss_dict["loss_overall"] = float(losses)
         for k, v in loss_dict.items():
@@ -139,9 +153,12 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
         logger.info("Using model EMA...")
         model_ema = ModelEMA(model, decay=opt.ema_decay)
 
+    # Setup AMP GradScaler for CUDA if enabled
+    scaler = torch.amp.GradScaler() if opt.get("use_amp", False) and "cuda" in str(opt.device) else None
+
     prev_best_score = 0
     for epoch_i in trange(opt.n_epoch, desc="Epoch"):
-        train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i)
+        train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i, scaler=scaler)
         lr_scheduler.step()
 
         if opt.model_ema:
@@ -202,7 +219,7 @@ def main(opt, resume=None):
 
     train_dataset = StartEndDataset(**dataset_config)
     copied_eval_config = copy.deepcopy(dataset_config)
-    copied_eval_config.data_path = opt.eval_path
+    copied_eval_config.data_path = opt.val_path
     eval_dataset = StartEndDataset(**copied_eval_config)
 
     # prepare model
@@ -215,6 +232,14 @@ def main(opt, resume=None):
         checkpoint = torch.load(resume, weights_only=False)
         model.load_state_dict(checkpoint["model"])
         logger.info("Loaded model checkpoint: {}".format(resume))
+
+    if opt.get("use_compile", False):
+        logger.info("Compiling model with torch.compile...")
+        try:
+            model = torch.compile(model, mode="max-autotune")
+            logger.info("Model compilation enabled successfully.")
+        except Exception as e:
+            logger.warning(f"Failed to compile model: {e}. Falling back to uncompiled model.")
 
     logger.info("Start Training...")
 

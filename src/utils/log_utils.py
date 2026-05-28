@@ -25,6 +25,8 @@ def write_log(opt, epoch_i: int, loss_meters, metrics=None, mode="train"):
         )
         filename = opt.eval_log_filepath
 
+    import os
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, "a") as f:
         f.write(to_write)
 
