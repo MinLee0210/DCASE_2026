@@ -5,6 +5,7 @@ from .rotary_pos_enc import RotaryEmbedding
 from .learnable_pos_enc import PositionEmbeddingLearned
 from .conv_pos_enc import ConvPositionalEncoding
 
+
 class TrainablePositionalEncoding(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
 
@@ -76,13 +77,9 @@ class PositionEmbeddingSine(nn.Module):
         return pos_x  # .permute(0, 2, 1)  # (bsz, num_pos_feats*2, L)
 
 
-
-
-
 def build_position_encoding(args):
     N_steps = args.hidden_dim
-    match args.position_embedding:
-        
+
     if args.position_embedding in ("v2", "sine"):
         # Standard sinusoidal embedding
         position_embedding = PositionEmbeddingSine(N_steps, normalize=True)
