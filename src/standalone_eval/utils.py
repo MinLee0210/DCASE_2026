@@ -241,9 +241,10 @@ def get_ap(y_true, y_predict, interpolate=True, point_11=False):
         else:
             return 1
     else:
-        assert sorted(set(y_true)) == [0, 1], (
-            "Ground truth can only contain elements {0,1}"
-        )
+        assert sorted(set(y_true)) == [
+            0,
+            1,
+        ], "Ground truth can only contain elements {0,1}"
 
     # Compute precision and recall
     precision, recall, _ = precision_recall_curve(y_true, y_predict)

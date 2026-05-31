@@ -1,6 +1,7 @@
 import argparse
 from src.core.config import BaseOptions
 
+
 def main():
     parser = argparse.ArgumentParser(description="DCASE 2026 Challenge")
     parser.add_argument(
@@ -10,7 +11,11 @@ def main():
         help="The pipeline to run.",
     )
     parser.add_argument(
-        "--config", "-c", type=str, required=True, help="Path to the YAML configuration file."
+        "--config",
+        "-c",
+        type=str,
+        required=True,
+        help="Path to the YAML configuration file.",
     )
     parser.add_argument(
         "--resume",
@@ -41,20 +46,23 @@ def main():
 
     if args.pipeline == "train":
         from src.pipelines.train import main as train_main
+
         train_main(opt, args.resume)
-        
+
     elif args.pipeline == "evaluate":
         if not args.model_path:
             parser.error("--model_path is required for evaluate pipeline")
         from src.pipelines.evaluate import start_inference
+
         opt.model_path = args.model_path
         opt.eval_split_name = args.split
         start_inference(opt)
-        
+
     elif args.pipeline == "create_submission":
         if not args.model_path:
             parser.error("--model_path is required for create_submission pipeline")
         from src.pipelines.create_submission import start_inference
+
         opt.model_path = args.model_path
         opt.eval_split_name = "private"
         start_inference(opt)

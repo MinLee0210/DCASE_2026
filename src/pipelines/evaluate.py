@@ -6,14 +6,6 @@ import os
 from collections import defaultdict
 from easydict import EasyDict
 
-import sys
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from src.utils.basic_utils import AverageMeter
-from src.utils.span_utils import span_cxw_to_xx
-
-from src.core.config import BaseOptions
 
 import torch
 import torch.nn.functional as F
@@ -23,6 +15,14 @@ from src.data.dataset import StartEndDataset, start_end_collate, prepare_batch_i
 from src.models.lcs_detr.postprocessing import PostProcessorDETR
 from src.standalone_eval.eval import eval_submission
 
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from src.core.config import BaseOptions
+
+from src.utils.basic_utils import AverageMeter
+from src.utils.span_utils import span_cxw_to_xx
 from src.utils.basic_utils import save_jsonl, save_json
 from src.models.lcs_detr.model import build_model as build_model_lcs_detr
 

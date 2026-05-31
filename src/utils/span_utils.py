@@ -145,8 +145,12 @@ def generalized_temporal_iou(spans1: Tensor, spans2: Tensor) -> Tensor:
     spans1 = spans1.float()
     spans2 = spans2.float()
     # Sort prediction spans to ensure start <= end, preventing assertion crashes on noisy early iterations
-    spans1 = torch.stack([torch.min(spans1, dim=-1)[0], torch.max(spans1, dim=-1)[0]], dim=-1)
-    spans2 = torch.stack([torch.min(spans2, dim=-1)[0], torch.max(spans2, dim=-1)[0]], dim=-1)
+    spans1 = torch.stack(
+        [torch.min(spans1, dim=-1)[0], torch.max(spans1, dim=-1)[0]], dim=-1
+    )
+    spans2 = torch.stack(
+        [torch.min(spans2, dim=-1)[0], torch.max(spans2, dim=-1)[0]], dim=-1
+    )
     assert (spans1[:, 1] >= spans1[:, 0]).all()
     assert (spans2[:, 1] >= spans2[:, 0]).all()
     iou, union = temporal_iou(spans1, spans2)
@@ -158,7 +162,9 @@ def generalized_temporal_iou(spans1: Tensor, spans2: Tensor) -> Tensor:
     return iou - (enclosing_area - union) / enclosing_area
 
 
-def temporal_intersection_criteria(pred_spans: Tensor, gt_spans: Tensor) -> Tuple[Tensor, Tensor]:
+def temporal_intersection_criteria(
+    pred_spans: Tensor, gt_spans: Tensor
+) -> Tuple[Tensor, Tensor]:
     """
     Calculate the temporal Intersection over GT area and intersection of pairs of spans.
 

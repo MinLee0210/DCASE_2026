@@ -19,7 +19,6 @@ import yaml
 
 from easydict import EasyDict
 
-
 GLOBAL_OPT = None
 
 

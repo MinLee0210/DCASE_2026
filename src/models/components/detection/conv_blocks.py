@@ -86,9 +86,11 @@ class ConvBlock1D(nn.Module):
             )
 
             layer = [
-                nn.Upsample(scale_factor=2, mode="linear")
-                if upscale
-                else nn.Identity(),
+                (
+                    nn.Upsample(scale_factor=2, mode="linear")
+                    if upscale
+                    else nn.Identity()
+                ),
                 conv,
                 TransposedLayerNorm(out_channel) if use_norm else nn.Identity(),
                 activate,

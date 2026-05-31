@@ -385,6 +385,10 @@ def eval_submission(submission, ground_truth, verbose=True, match_number=True):
 
     eval_metrics = {}
     eval_metrics_brief = OrderedDict()
+
+    if len(submission) == 0:
+        return {"brief": eval_metrics_brief}
+
     if "pred_relevant_windows" in submission[0]:
         moment_ret_scores = eval_moment_retrieval(
             submission, ground_truth, verbose=verbose

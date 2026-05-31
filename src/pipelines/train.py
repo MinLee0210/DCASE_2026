@@ -26,7 +26,7 @@ from src.utils.basic_utils import (
     save_checkpoint,
     rename_latest_to_best,
 )
-from src.utils.log_utils import write_log
+from src.utils.log_utils import write_log, WandbLogger
 from src.utils.model_utils import count_parameters, ModelEMA
 
 import logging
@@ -53,7 +53,16 @@ def set_seed(seed, use_cuda=True):
         torch.cuda.manual_seed_all(seed)
 
 
-def train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i, scaler=None):
+def train_epoch(
+    model,
+    criterion,
+    train_loader,
+    optimizer,
+    opt,
+    epoch_i,
+    scaler=None,
+    wandb_logger=None,
+):
     """Trains for one epoch.
 
     Args:
@@ -73,8 +82,12 @@ def train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i, scaler=
     loss_meters = defaultdict(AverageMeter)
 
     use_amp = opt.get("use_amp", False)
-    device_type = "cuda" if "cuda" in str(opt.device) else ("mps" if "mps" in str(opt.device) else "cpu")
-    
+    device_type = (
+        "cuda"
+        if "cuda" in str(opt.device)
+        else ("mps" if "mps" in str(opt.device) else "cpu")
+    )
+
     # Configure autocast keyword args
     autocast_kwargs = {"device_type": device_type, "enabled": use_amp}
     if device_type in ["cpu", "mps"]:
@@ -123,6 +136,10 @@ def train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i, scaler=
             )
 
     write_log(opt, epoch_i, loss_meters)
+    if wandb_logger:
+        wandb_logger.log_metrics(
+            {k: v.avg for k, v in loss_meters.items()}, step=epoch_i + 1, prefix="train"
+        )
 
 
 def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset, opt):
@@ -141,6 +158,12 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
     opt.eval_log_txt_formatter = "{time_str} [Epoch] {epoch:03d} [Loss] {loss_str} [Metrics] {eval_metrics_str}\n"
     save_submission_filename = "latest_{}_val_preds.jsonl".format(opt.dset_name)
 
+    wandb_logger = WandbLogger(
+        project_name=f"DCASE2026_{opt.dset_name}",
+        run_name=f"{opt.model_name}_run",
+        config=vars(opt),
+    )
+
     train_loader = DataLoader(
         train_dataset,
         collate_fn=start_end_collate,
@@ -154,11 +177,17 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
         model_ema = ModelEMA(model, decay=opt.ema_decay)
 
     # Setup AMP GradScaler for CUDA if enabled
-    scaler = torch.amp.GradScaler() if opt.get("use_amp", False) and "cuda" in str(opt.device) else None
+    scaler = (
+        torch.amp.GradScaler()
+        if opt.get("use_amp", False) and "cuda" in str(opt.device)
+        else None
+    )
 
     prev_best_score = 0
     for epoch_i in trange(opt.n_epoch, desc="Epoch"):
-        train_epoch(model, criterion, train_loader, optimizer, opt, epoch_i, scaler=scaler)
+        train_epoch(
+            model, criterion, train_loader, optimizer, opt, epoch_i, scaler=scaler
+        )
         lr_scheduler.step()
 
         if opt.model_ema:
@@ -181,6 +210,11 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
 
             write_log(opt, epoch_i, eval_loss_meters, metrics=metrics, mode="val")
             logger.info("metrics {}".format(pprint.pformat(metrics["brief"], indent=4)))
+            if wandb_logger:
+                val_logs = {k: v.avg for k, v in eval_loss_meters.items()}
+                if "brief" in metrics:
+                    val_logs.update(metrics["brief"])
+                wandb_logger.log_metrics(val_logs, step=epoch_i + 1, prefix="val")
 
             stop_score = metrics["brief"]["MR-full-R1@0.7"]
 
@@ -189,6 +223,9 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
                 save_checkpoint(model, optimizer, lr_scheduler, epoch_i, opt)
                 logger.info("The checkpoint file has been updated.")
                 rename_latest_to_best(latest_file_paths)
+
+    if wandb_logger:
+        wandb_logger.finish()
 
 
 def main(opt, resume=None):
@@ -239,7 +276,9 @@ def main(opt, resume=None):
             model = torch.compile(model, mode="max-autotune")
             logger.info("Model compilation enabled successfully.")
         except Exception as e:
-            logger.warning(f"Failed to compile model: {e}. Falling back to uncompiled model.")
+            logger.warning(
+                f"Failed to compile model: {e}. Falling back to uncompiled model."
+            )
 
     logger.info("Start Training...")
 

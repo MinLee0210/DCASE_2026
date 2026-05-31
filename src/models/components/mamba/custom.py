@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
+
 # pyrefly: ignore [missing-import]
 from mamba_ssm import Mamba
 from .cross_attention import MambaCrossAttention
 
 
 class SparseContextAttention(nn.Module):
-    def __init__(self, d_model, num_heads=8, top_k  =32):
+    def __init__(self, d_model, num_heads=8, top_k=32):
         super().__init__()
         self.top_k = top_k
         self.similarity = nn.Linear(d_model, d_model)

@@ -4,7 +4,7 @@ Repository for participating in the [DCASE 2026 Challenge](https://dcase.communi
 
 ## 🎯 Target Tasks
 
-Task: Noise-aware Unsupervised Anomalous Sound Detection for Machine Condition Monitoring / Language-Based Audio Retrieval
+Task 6: Language-Based Audio Retrieval
 
 ## 📁 Project Structure
 
@@ -37,22 +37,22 @@ The repository uses a unified CLI to trigger different pipelines. All commands s
 Run the training pipeline from scratch or fine-tune from a checkpoint:
 ```bash
 # Train from scratch
-python -m src train --config config/config_enhanced.yml
+python -m src train --config config/config.yml
 
 # Fine-tune from an existing checkpoint
-python -m src train --config config/config_enhanced.yml --resume path/to/checkpoint.pt
+python -m src train --config config/config.yml --resume path/to/checkpoint.pt
 ```
 
 ### 2. Evaluation
 Evaluate a trained model on a specific split (`val` or `test`):
 ```bash
-python -m src evaluate --config config/config_enhanced.yml --model_path path/to/checkpoint.pt --split val
+python -m src evaluate --config config/config.yml --model_path path/to/checkpoint.pt --split val
 ```
 
 ### 3. Create Submission
 Generate private submissions for the challenge:
 ```bash
-python -m src create_submission --config config/config_enhanced.yml --model_path path/to/checkpoint.pt
+python -m src create_submission --config config/config.yml --model_path path/to/checkpoint.pt
 ```
 
 ## 🛠️ Key Technical Features
@@ -62,15 +62,10 @@ python -m src create_submission --config config/config_enhanced.yml --model_path
 - **Advanced Matcher**: Stable Hungarian Bipartite Matcher supporting Focal Loss and cross-device safety mechanisms.
 - **Optimized Attention**: Uses `FlashMultiheadAttention` with dynamic hardware fallbacks.
 - **Model Compilation**: Optionally integrates `torch.compile` for faster execution.
+- **Experiment Tracking**: Automatic Weights & Biases (`wandb`) integration for training/validation metrics.
+- **Robust Data Pipeline**: Dataset loaders dynamically resolve missing feature files to prevent crashes.
 
 ## 📚 Reference Papers
-
-### SELD
-- Spatial and Semantic Embedding Integration for Stereo SELD
-- STARSS23: Audio-Visual Dataset of Spatial Recordings
-- Stereo SELD with Onscreen-Offscreen Classification
-- The NERC-SLIP System for Stereo SELD (DCASE 2025)
-- Self-Guided Target Sound Extraction and Classification
 
 ### Language-Based Audio Retrieval
 - A Cross-Modal Attention Approach to Language-Based Audio Retrieval
