@@ -18,7 +18,7 @@ DCASE2026/
 │   ├── core/           # Core configuration and environment settings
 │   ├── data/           # Dataset loaders and vocabulary management
 │   ├── models/         # Neural network architectures
-│   │   ├── qd_detr/    # QD-DETR model, transformer, matcher, and postprocessing
+│   │   ├── lcs_detr/    # LCS-DETR model, transformer, matcher, and postprocessing
 │   │   ├── components/ # Core components (Attention, Mamba, Encoders)
 │   │   └── feature_extractor/ # Feature extraction utilities
 │   ├── pipelines/      # High-level execution scripts (Train, Evaluate, Submit)

@@ -6,10 +6,10 @@ from typing import Any, Dict, List, Optional, Tuple
 import torch
 from torch import Tensor, nn
 
-from src.models.components.sg_detr_blocks.blocks.anchors import AnchorGenerator
-from src.models.components.sg_detr_blocks.blocks.conv_blocks import ConvBlock1D
-from src.models.components.sg_detr_blocks.blocks.layers import Scale
-from src.models.components.sg_detr_blocks.utils.schemas import AuxDetectorOutput
+from src.models.components.detection.anchors import AnchorGenerator
+from src.models.components.detection.conv_blocks import ConvBlock1D
+from src.models.components.transformer.layers import Scale
+from src.models.components.utils.schemas import AuxDetectorOutput
 from src.utils.codetr_utils import prepare_matched_gt
 from src.utils.span_utils import SpanList, span_cxw_to_xx, span_xx_to_cxw
 

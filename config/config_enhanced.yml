@@ -67,7 +67,7 @@ t_feat_type: clap
 a_feat_dim: 768
 t_feat_dim: 768
 
-model_name: qd_detr
+model_name: lcs_detr
 
 # Optimization and variant configurations
 model_variant: "enhanced"
@@ -75,3 +75,5 @@ use_amp: False
 use_compile: False
 use_focal_loss: True
 use_flash_attention: False
+lr_scheduler_type: "cosine"
+use_saliency_conv: true

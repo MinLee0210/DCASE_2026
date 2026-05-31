@@ -155,6 +155,7 @@ class FlashMultiheadAttention(Module):
         use_flash_attn = self.use_flash_attention
         if not use_flash_attn:
             from src.core.config import GLOBAL_OPT
+
             if GLOBAL_OPT is not None:
                 use_flash_attn = GLOBAL_OPT.get("use_flash_attention", False)
 
@@ -199,7 +200,7 @@ class FlashMultiheadAttention(Module):
                 sdpa_attn_mask = attn_mask.unsqueeze(0).unsqueeze(0)
             elif attn_mask.dim() == 3:
                 sdpa_attn_mask = attn_mask.view(bsz, self.num_heads, tgt_len, -1)
-            
+
             if sdpa_attn_mask.dtype == torch.bool:
                 # Invert because SDPA expects True for elements to keep (opposite of masked_fill)
                 sdpa_attn_mask = ~sdpa_attn_mask
@@ -215,7 +216,9 @@ class FlashMultiheadAttention(Module):
         dropout_p = self.dropout_prob if self.training else 0.0
 
         output = torch.nn.functional.scaled_dot_product_attention(
-            q, k, v,
+            q,
+            k,
+            v,
             attn_mask=sdpa_attn_mask,
             dropout_p=dropout_p,
             is_causal=False,

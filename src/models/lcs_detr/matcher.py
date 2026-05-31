@@ -72,9 +72,10 @@ class HungarianMatcher(nn.Module):
             [v["spans"] for v in targets]
         )  # [num_target_spans in batch, 2]
         tgt_ids = torch.full(
-            [len(tgt_spans)], self.foreground_label,
+            [len(tgt_spans)],
+            self.foreground_label,
             dtype=torch.int64,
-            device=out_prob.device
+            device=out_prob.device,
         )  # [total #spans in the batch]
 
         # Compute the classification cost. Contrary to the loss, we don't use the NLL,

@@ -5,13 +5,13 @@ from typing import List, Optional, Tuple
 import torch
 from torch import Tensor, nn
 
-from src.models.components.sg_detr_blocks.blocks.feed_forward import SlimMLP
-from src.models.components.sg_detr_blocks.blocks.layers import TransformerDecoderLayer
-from src.models.components.sg_detr_blocks.blocks.position_encoding import (
+from src.models.components.transformer.feed_forward import SlimMLP
+from src.models.components.transformer.layers import TransformerDecoderLayer
+from src.models.components.positional_encoding.dab_pos_encoding import (
     gen_sineembed_for_position,
 )
-from src.models.components.sg_detr_blocks.utils.model_utils import inverse_sigmoid
-from src.models.components.sg_detr_blocks.utils.stacker import get_clones
+from src.models.components.utils.model_utils import inverse_sigmoid
+from src.models.components.utils.stacker import get_clones
 
 
 # pylint: disable=too-many-arguments, too-many-locals

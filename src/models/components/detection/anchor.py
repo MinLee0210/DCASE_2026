@@ -6,7 +6,7 @@ import numpy as np
 import torch
 from torch import Tensor, nn
 
-from src.models.components.sg_detr_blocks.utils.model_utils import inverse_sigmoid
+from src.models.components.utils.model_utils import inverse_sigmoid
 
 
 class RandomAnchor(nn.Module):

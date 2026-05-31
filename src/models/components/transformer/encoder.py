@@ -9,22 +9,22 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import functional as func
 
-from src.models.components.sg_detr_blocks.blocks.layers import (
+from src.models.components.transformer.layers import (
     T2ATransformerEncoderLayer,
     TransformerEncoderLayer,
 )
-from src.models.components.sg_detr_blocks.blocks.pooling import (
+from src.models.components.audio.pooling import (
     GlobalMaxPooling,
     GlobalMeanPooling,
     GRUFeatureExtractor,
     LearnedAggregation,
     LearnedAggregationLayer,
 )
-from src.models.components.sg_detr_blocks.utils.schemas import (
+from src.models.components.utils.schemas import (
     MomentEncoderOutput,
     SentenceEncoderOutput,
 )
-from src.models.components.sg_detr_blocks.utils.stacker import get_clones
+from src.models.components.utils.stacker import get_clones
 from src.utils.span_utils import span_cxw_to_xx
 
 TEMP: float = 3.0
@@ -662,6 +662,7 @@ class LocalSaliencyHead(nn.Module):
         logit_mode: str = "linear",
         use_gamma: bool = True,
         num_aggregation_layers: int = 1,
+        use_saliency_conv: bool = False,
     ) -> None:
         """
         Initialize the LocalSaliencyHead module.
@@ -680,6 +681,17 @@ class LocalSaliencyHead(nn.Module):
         self.sentence_pooling = LearnedAggregation(
             model_dim, sentence_pooling_layer, num_aggregation_layers
         )
+
+        self.use_saliency_conv = use_saliency_conv
+        if self.use_saliency_conv:
+            # Lightweight 1D Convolution to capture local temporal continuity
+            self.audio_conv = nn.Sequential(
+                nn.Conv1d(
+                    model_dim, model_dim, kernel_size=5, padding=2, groups=model_dim
+                ),
+                nn.GELU(),
+                nn.Conv1d(model_dim, model_dim, kernel_size=1),
+            )
         self._initialize_parameters()
 
     def _validate_logit_mode(self, logit_mode: str) -> None:
@@ -768,7 +780,16 @@ class LocalSaliencyHead(nn.Module):
             Tuple[Tensor, Tensor]: The saliency scores and the pooled sentence embeddings.
         """
         src_sent = self.sentence_pooling(src_txt, key_padding_mask=src_txt_mask)
-        saliency_scores = self.saliency_scores(src_aud, src_sent)
+
+        if getattr(self, "use_saliency_conv", False):
+            # Apply 1D Convolution to audio features
+            aud_features = src_aud.transpose(1, 2)  # [bs, model_dim, seq_len]
+            aud_features = self.audio_conv(aud_features)
+            aud_features = aud_features.transpose(1, 2) + src_aud  # Residual connection
+        else:
+            aud_features = src_aud
+
+        saliency_scores = self.saliency_scores(aud_features, src_sent)
         return saliency_scores, src_sent
 
 

@@ -17,11 +17,11 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from src.data.dataset import StartEndDataset, start_end_collate, prepare_batch_inputs
-from src.models.qd_detr.postprocessing import PostProcessorDETR
+from src.models.lcs_detr.postprocessing import PostProcessorDETR
 from src.standalone_eval.eval import eval_submission
 
 from src.utils.basic_utils import save_jsonl, save_json
-from src.models.qd_detr.model import build_model as build_model_qd_detr
+from src.models.lcs_detr.model import build_model as build_model_lcs_detr
 
 import logging
 
@@ -137,7 +137,7 @@ def eval_epoch(model, eval_dataset, opt, save_submission_filename, criterion):
 def setup_model(opt):
     """setup model/optimizer/scheduler and load checkpoints when needed"""
     logger.info("setup model/optimizer/scheduler")
-    model, criterion = build_model_qd_detr(opt)
+    model, criterion = build_model_lcs_detr(opt)
 
     if opt.device == "cuda":
         logger.info("CUDA enabled.")

@@ -5,7 +5,7 @@ from typing import List
 import torch
 from torch import Tensor, nn
 
-from src.models.components.sg_detr_blocks.blocks.conv_blocks import TransposedLayerNorm
+from src.models.components.detection.conv_blocks import TransposedLayerNorm
 
 INIT_CONST: float = 0.01
 

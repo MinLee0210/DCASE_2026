@@ -6,7 +6,7 @@ import torch
 from torch import Tensor, nn
 from torch.nn import Embedding
 
-from src.models.components.sg_detr_blocks.utils.model_utils import inverse_sigmoid
+from src.models.components.utils.model_utils import inverse_sigmoid
 from src.utils.span_utils import span_cxw_to_xx, span_xx_to_cxw
 
 

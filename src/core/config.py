@@ -32,6 +32,8 @@ class BaseOptions(object):
             "use_focal_loss": False,
             "use_flash_attention": False,
             "model_variant": "baseline",
+            "use_saliency_conv": False,
+            "lr_scheduler_type": "step",
         }
 
     @property

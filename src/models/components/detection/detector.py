@@ -7,22 +7,22 @@ import torch
 from torch import Tensor, nn
 from torch.nn import functional as func
 
-from src.models.components.sg_detr_blocks.blocks.decoder import TransformerDecoder
-from src.models.components.sg_detr_blocks.blocks.encoder import TransformerEncoder
-from src.models.components.sg_detr_blocks.blocks.feed_forward import SlimMLP
-from src.models.components.sg_detr_blocks.blocks.layers import (
+from src.models.components.transformer.decoder import TransformerDecoder
+from src.models.components.transformer.encoder import TransformerEncoder
+from src.models.components.transformer.feed_forward import SlimMLP
+from src.models.components.transformer.layers import (
     TransformerDecoderLayer,
     TransformerEncoderLayer,
 )
-from src.models.components.sg_detr_blocks.utils.aux_anchors import (
+from src.models.components.utils.aux_anchors import (
     prepare_anchors_codetr,
     prepare_anchors_dn,
 )
-from src.models.components.sg_detr_blocks.utils.model_utils import (
+from src.models.components.utils.model_utils import (
     gen_encoder_output_proposals,
     inverse_sigmoid,
 )
-from src.models.components.sg_detr_blocks.utils.schemas import (
+from src.models.components.utils.schemas import (
     DetectorOutput,
     DetEncoderOutput,
     QueryProposalsOutput,

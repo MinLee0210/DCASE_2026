@@ -4,11 +4,11 @@ import numpy as np
 from torch import nn
 
 from src.utils.span_utils import generalized_temporal_iou, span_cxw_to_xx
-from src.models.qd_detr.matcher import build_matcher
-from src.models.qd_detr.transformer import build_transformer
+from src.models.lcs_detr.matcher import build_matcher
+from src.models.lcs_detr.transformer import build_transformer
 from src.models.components.positional_encoding.base import build_position_encoding
 from src.utils.misc import accuracy
-from src.models.components.sg_detr_blocks.blocks.encoder import (
+from src.models.components.transformer.encoder import (
     LocalSaliencyHead,
     Text2AudioEncoder,
     SaliencyAmplifier,
@@ -31,7 +31,7 @@ def inverse_sigmoid(x, eps=1e-3):
     return torch.log(x1 / x2)
 
 
-class QDDETR(nn.Module):
+class LCSDETR(nn.Module):
     def __init__(
         self,
         transformer,
@@ -46,6 +46,7 @@ class QDDETR(nn.Module):
         span_loss_type="l1",
         use_txt_pos=False,
         n_input_proj=2,
+        use_saliency_conv=False,
     ):
         """Initializes the model.
         Parameters:
@@ -54,7 +55,7 @@ class QDDETR(nn.Module):
             txt_position_embed: position_embedding for text
             txt_dim: int, text query input dimension
             num_queries: number of object queries, ie detection slot. This is the maximal number of objects
-                         QD-DETR can detect in a single audio.
+                         LCS-DETR can detect in a single audio.
             aux_loss: True if auxiliary decoding losses (loss at each decoder layer) are to be used.
             max_a_l: int, maximum #clips in audio
             span_loss_type: str, one of [l1, ce]
@@ -144,6 +145,7 @@ class QDDETR(nn.Module):
             logit_mode="linear",
             use_gamma=True,
             num_aggregation_layers=1,
+            use_saliency_conv=use_saliency_conv,
         )
 
         self.txt2aud_encoder = Text2AudioEncoder(
@@ -350,11 +352,11 @@ class SetCriterion(nn.Module):
         prob = torch.exp(log_prob)
         log_pt = log_prob.gather(-1, targets.unsqueeze(-1)).squeeze(-1)
         pt = prob.gather(-1, targets.unsqueeze(-1)).squeeze(-1)
-        
+
         # Clamp pt and log_pt to guarantee numerical stability of gradients under mixed-precision (autocast)
         pt = torch.clamp(pt, min=1e-5, max=1.0 - 1e-5)
         log_pt = torch.clamp(log_pt, min=-12.0)
-        
+
         alpha_t = torch.where(targets == self.foreground_label, alpha, 1.0 - alpha)
         loss = -alpha_t * ((1.0 - pt) ** gamma) * log_pt
         return loss.mean()
@@ -662,7 +664,7 @@ class LinearLayer(nn.Module):
 
 
 def build_model(args):
-    """Builds the QD-DETR model and criterion.
+    """Builds the LCS-DETR model and criterion.
 
     Args:
         args: Configuration arguments.
@@ -677,12 +679,12 @@ def build_model(args):
     # As another example, for a dataset that has a single class with id 1,
     # you should pass `num_classes` to be 2 (max_obj_id + 1).
     # For more details on this, check the following discussion
-    # https://github.com/facebookresearch/qd_detr/issues/108#issuecomment-650269223
+    # https://github.com/facebookresearch/lcs_detr/issues/108#issuecomment-650269223
     device = torch.device(args.device)
     transformer = build_transformer(args)
     position_embedding, txt_position_embedding = build_position_encoding(args)
 
-    model = QDDETR(
+    model = LCSDETR(
         transformer,
         position_embedding,
         txt_position_embedding,
@@ -694,6 +696,7 @@ def build_model(args):
         input_dropout=args.input_dropout,
         span_loss_type=args.span_loss_type,
         n_input_proj=args.n_input_proj,
+        use_saliency_conv=args.get("use_saliency_conv", False),
     )
 
     matcher = build_matcher(args)

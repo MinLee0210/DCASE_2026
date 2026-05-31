@@ -3,9 +3,11 @@
 import torch
 from torch import Tensor, nn
 
-from src.models.components.sg_detr_blocks.blocks.attention import FlashMultiheadAttention as DABMultiheadAttention
-from src.models.components.sg_detr_blocks.blocks.feed_forward import FeedForwardNetwork
-from src.models.components.sg_detr_blocks.utils.stacker import get_clones
+from src.models.components.attention.dab_attention import (
+    FlashMultiheadAttention as DABMultiheadAttention,
+)
+from src.models.components.transformer.feed_forward import FeedForwardNetwork
+from src.models.components.utils.stacker import get_clones
 
 EPS: float = 1e-6
 INIT_CONST: float = 0.02
