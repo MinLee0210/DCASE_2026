@@ -147,9 +147,13 @@ def train_epoch(
             wandb_logger.log_metrics(step_logs, step=global_step, prefix="train")
 
     write_log(opt, epoch_i, loss_meters)
+
     if wandb_logger:
+        epoch_end_step = (epoch_i + 1) * num_training_examples
         wandb_logger.log_metrics(
-            {k: v.avg for k, v in loss_meters.items()}, step=epoch_i + 1, prefix="train"
+            {k: v.avg for k, v in loss_meters.items()},
+            step=epoch_end_step,
+            prefix="train",
         )
 
 
