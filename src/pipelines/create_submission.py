@@ -1,6 +1,6 @@
 import argparse
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import os
 from easydict import EasyDict
 

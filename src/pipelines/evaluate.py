@@ -1,7 +1,7 @@
 import argparse
 import pprint
 
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import os
 from collections import defaultdict
 from easydict import EasyDict

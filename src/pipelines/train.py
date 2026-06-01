@@ -4,7 +4,7 @@ import random
 import argparse
 import copy
 import numpy as np
-from tqdm import tqdm, trange
+from tqdm.auto import tqdm, trange
 from collections import defaultdict
 
 import torch

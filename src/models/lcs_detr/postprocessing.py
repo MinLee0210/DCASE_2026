@@ -36,7 +36,7 @@ SOFTWARE.
 """
 
 import torch
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 
 class PostProcessorDETR:
