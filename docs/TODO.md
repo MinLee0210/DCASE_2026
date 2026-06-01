@@ -17,6 +17,11 @@
 - [ ] **Temporal Feature Masking:** Implement SpecAugment-style random masking of small time-blocks in `audio_feat` during training to prevent overfitting to specific high-magnitude frames.
 - [ ] **Feature Dropout/Noise:** Apply small random noise or dropout directly to input features (`src_aud` and `src_txt`) before they pass through the input projection layers to increase robustness to feature extraction artifacts.
 
+### 🎯 Boundary Precision (Reduces mAP@0.5 → mAP@0.75 Gap)
+- [ ] **IoU Prediction Head (High Impact):** Add a dedicated auxiliary head to the DETR decoder that predicts the expected IoU between each predicted span and the ground truth. Use this predicted IoU to re-rank span candidates at inference time: `score = classification_score^α × predicted_IoU^(1-α)`. This directly addresses the gap because the ranking now accounts for boundary precision, not just semantic relevance. (Ref: SG-DETR paper, Section 3.6)
+- [ ] **Boundary-Based Span Prediction / BAM-DETR (High Impact):** Replace the center-width `(c_x, w)` span prediction with explicit left-boundary and right-boundary offset prediction from each decoder query. This gives the model a direct, independent training signal for each temporal boundary. Boundary-specific losses (e.g., separate L1 loss for start and end) are shown to significantly improve mAP at higher IoU thresholds. (Ref: BAM-DETR, Lee & Byun, 2023)
+- [ ] **Temporal Jitter Augmentation (Medium Impact):** During training, randomly perturb the ground truth window boundaries by ±10–20% of its duration. This forces the model to learn robust, stable boundary localization rather than overfitting to exact annotation boundaries.
+
 
 ---
 
