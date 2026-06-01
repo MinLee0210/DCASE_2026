@@ -94,9 +94,12 @@ def train_epoch(
         autocast_kwargs["dtype"] = torch.bfloat16
 
     num_training_examples = len(train_loader)
-    for batch_idx, batch in tqdm(
-        enumerate(train_loader), desc="Training Iteration", total=num_training_examples
-    ):
+    pbar = tqdm(
+        train_loader,
+        desc=f"Epoch {epoch_i + 1} Training Iteration",
+        total=num_training_examples,
+    )
+    for batch_idx, batch in enumerate(pbar):
         model_inputs, targets = prepare_batch_inputs(batch[1], opt.device)
 
         optimizer.zero_grad()
@@ -134,6 +137,8 @@ def train_epoch(
                 if k in criterion.weight_dict
                 else float(v)
             )
+
+        pbar.set_postfix(loss=f"{loss_dict['loss_overall']:.4f}")
 
         if wandb_logger and (batch_idx + 1) % opt.get("log_interval", 10) == 0:
             global_step = epoch_i * num_training_examples + batch_idx
@@ -200,7 +205,14 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
     prev_best_score = 0
     for epoch_i in trange(opt.n_epoch, desc="Epoch"):
         train_epoch(
-            model, criterion, train_loader, optimizer, opt, epoch_i, scaler=scaler
+            model,
+            criterion,
+            train_loader,
+            optimizer,
+            opt,
+            epoch_i,
+            scaler=scaler,
+            wandb_logger=wandb_logger,
         )
         lr_scheduler.step()
 

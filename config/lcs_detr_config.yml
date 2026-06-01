@@ -75,7 +75,6 @@ t_feat_dim: 768
 model_name: lcs_detr
 
 # Optimization and variant configurations
-model_variant: "enhanced"       # Placeholder parameter (no active effect currently)
 use_amp: False                  # True/False: Enables bfloat16 Automatic Mixed Precision to save VRAM and speed up training
 use_compile: False              # True/False: Enables torch.compile for graph optimization (faster training, slower startup)
 use_focal_loss: True            # True/False: Uses Focal Loss instead of Cross-Entropy for the Hungarian matcher (recommended)
