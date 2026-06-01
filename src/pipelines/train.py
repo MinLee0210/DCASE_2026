@@ -244,7 +244,10 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
                 val_logs = {k: v.avg for k, v in eval_loss_meters.items()}
                 if "brief" in metrics:
                     val_logs.update(metrics["brief"])
-                wandb_logger.log_metrics(val_logs, step=epoch_i + 1, prefix="val")
+                # Align validation logging step with the global step from training
+                wandb_logger.log_metrics(
+                    val_logs, step=(epoch_i + 1) * len(train_loader), prefix="val"
+                )
 
             stop_score = metrics["brief"]["MR-full-R1@0.7"]
 
