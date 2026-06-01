@@ -47,7 +47,7 @@ ema_decay: 0.9
 results_dir: results_pretraining
 
 # Weights & Biases Logging configuration
-wandb_project: "DCASE2026"
+wandb_project: "DCASE2026 - LCS-DETR"
 wandb_run_name: "lcs_detr_enhanced"
 log_interval: 10              # Log training metrics every N steps/iterations
 
