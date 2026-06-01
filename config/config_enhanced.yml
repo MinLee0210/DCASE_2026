@@ -14,7 +14,7 @@ max_windows: 5
 clip_length: 1
 eval_epoch_interval: 1
 
-position_embedding: "sine"
+position_embedding: "sine"      # "sine", "v2", "learned", "rope", or "conv"
 enc_layers: 2
 dec_layers: 2
 dim_feedforward: 1024
@@ -26,7 +26,7 @@ num_queries: 10
 
 n_input_proj: 2
 saliency_margin: 0.2
-span_loss_type: "l1"
+span_loss_type: "l1"            # "l1" (L1 Loss) or "ce" (Cross Entropy Loss)
 set_cost_span: 10
 set_cost_giou: 1
 set_cost_class: 4
@@ -39,27 +39,32 @@ lw_saliency: 1
 ckpt_filename: best_checkpoint.pth
 train_log_filename: train.log
 eval_log_filename: val.log
-eval_split_name: val
+eval_split_name: val            # "val", "test", or "private"
 aux_loss: True
 
 model_ema: False
 ema_decay: 0.9
 results_dir: results_pretraining
 
+# Weights & Biases Logging configuration
+wandb_project: "DCASE2026"
+wandb_run_name: "lcs_detr_enhanced"
+log_interval: 10              # Log training metrics every N steps/iterations
+
 # clotho-moment-specific config
 dset_name: clotho-moment
 clip_length: 1
-train_path: data/preprocessed/local_training_data.jsonl
-val_path: data/preprocessed/local_training_data.jsonl
-test_path: data/preprocessed/local_training_data.jsonl
+train_path: ../preprocessed/clotho_moment_valid_train.jsonl
+val_path: ../preprocessed/clotho_moment_valid_val.jsonl
+test_path: ../preprocessed/clotho_moment_valid_test.jsonl
 submission_path: private/dcase2026_private.jsonl
 max_q_l: 32
 max_a_l: 300
 
 # feature-specific config 
-ctx_mode: audio_tef
-a_feat_dir: data/clotho-moment/clap
-t_feat_dir: data/clotho-moment/clap_text
+ctx_mode: audio_tef             # "audio", "tef", or "audio_tef" (Temporal Embeddings)
+a_feat_dir: ../clotho-moment/clap
+t_feat_dir: ../clotho-moment/clap_text
 a_sub_feat_dir: private/feature/clap
 t_sub_feat_dir: private/feature/clap_text
 a_feat_type: clap
@@ -70,10 +75,10 @@ t_feat_dim: 768
 model_name: lcs_detr
 
 # Optimization and variant configurations
-model_variant: "enhanced"
-use_amp: False
-use_compile: False
-use_focal_loss: True
-use_flash_attention: False
-lr_scheduler_type: "cosine"
+model_variant: "enhanced"       # Placeholder parameter (no active effect currently)
+use_amp: False                  # True/False: Enables bfloat16 Automatic Mixed Precision to save VRAM and speed up training
+use_compile: False              # True/False: Enables torch.compile for graph optimization (faster training, slower startup)
+use_focal_loss: True            # True/False: Uses Focal Loss instead of Cross-Entropy for the Hungarian matcher (recommended)
+use_flash_attention: False      # True/False: Enables FlashMultiheadAttention (requires NVIDIA GPU and flash-attn package)
+lr_scheduler_type: "cosine"     # "cosine" (CosineAnnealingLR) or "step" (StepLR)
 use_saliency_conv: true

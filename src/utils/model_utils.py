@@ -1,5 +1,28 @@
 import torch
 import copy
+import random
+import string
+from datetime import datetime
+
+
+def get_run_name(
+    model_name: str,
+    lr: float,
+    batch_size: int,
+    experiment_type: str = "",
+    random_suffix: bool = True,
+    random_suffix_len: int = 6,
+) -> str:
+    """Generate a unique run name with timestamp."""
+    now = datetime.now().strftime("%m%d-%H%M")
+    rand_suffx = (
+        "".join(
+            random.choices(string.ascii_letters + string.digits, k=random_suffix_len)
+        )
+        if random_suffix
+        else ""
+    )
+    return f"{model_name}_{experiment_type}_lr{lr}_bs{batch_size}_{now}_{rand_suffx}"
 
 
 def count_parameters(model: torch.nn.Module, verbose: bool = True) -> dict:

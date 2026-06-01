@@ -27,7 +27,7 @@ from src.utils.basic_utils import (
     rename_latest_to_best,
 )
 from src.utils.log_utils import write_log, WandbLogger
-from src.utils.model_utils import count_parameters, ModelEMA
+from src.utils.model_utils import count_parameters, ModelEMA, get_run_name
 
 import logging
 
@@ -135,6 +135,12 @@ def train_epoch(
                 else float(v)
             )
 
+        if wandb_logger and (batch_idx + 1) % opt.get("log_interval", 10) == 0:
+            global_step = epoch_i * num_training_examples + batch_idx
+            step_logs = {f"step_{k}": float(v) for k, v in loss_dict.items()}
+            step_logs["lr"] = optimizer.param_groups[0]["lr"]
+            wandb_logger.log_metrics(step_logs, step=global_step, prefix="train")
+
     write_log(opt, epoch_i, loss_meters)
     if wandb_logger:
         wandb_logger.log_metrics(
@@ -158,9 +164,17 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
     opt.eval_log_txt_formatter = "{time_str} [Epoch] {epoch:03d} [Loss] {loss_str} [Metrics] {eval_metrics_str}\n"
     save_submission_filename = "latest_{}_val_preds.jsonl".format(opt.dset_name)
 
+    wandb_run_name = get_run_name(
+        opt.model_name,
+        opt.lr,
+        opt.bsz,
+        experiment_type=opt.get("experiment_type", "lcs_detr"),
+        random_suffix=True,
+        random_suffix_len=6,
+    )
     wandb_logger = WandbLogger(
-        project_name=f"DCASE2026_{opt.dset_name}",
-        run_name=f"{opt.model_name}_run",
+        project_name=opt.get("wandb_project", f"DCASE2026_{opt.dset_name}"),
+        run_name=wandb_run_name,
         config=vars(opt),
     )
 
