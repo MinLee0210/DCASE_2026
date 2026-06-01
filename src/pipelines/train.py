@@ -232,7 +232,7 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
 
             stop_score = metrics["brief"]["MR-full-R1@0.7"]
 
-            if stop_score > prev_best_score:
+            if stop_score >= prev_best_score:
                 prev_best_score = stop_score
                 save_checkpoint(model, optimizer, lr_scheduler, epoch_i, opt)
                 logger.info("The checkpoint file has been updated.")

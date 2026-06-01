@@ -45,6 +45,7 @@ def load_json(filename):
 
 
 def save_json(data, filename, save_pretty=False, sort_keys=False):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, "w") as f:
         if save_pretty:
             f.write(json.dumps(data, indent=4, sort_keys=sort_keys))
@@ -59,6 +60,7 @@ def load_jsonl(filename):
 
 def save_jsonl(data, filename):
     """data is a list"""
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, "w") as f:
         f.write("\n".join([json.dumps(e) for e in data]))
 

@@ -21,7 +21,7 @@ class ConvPositionalEncoding(nn.Module):
         )
         nn.init.xavier_uniform_(self.conv.weight)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor, mask: torch.Tensor = None) -> torch.Tensor:
         # x: (B, L, D) -> (B, D, L) for conv1d
         x = x.transpose(1, 2)
         x = self.conv(x)
