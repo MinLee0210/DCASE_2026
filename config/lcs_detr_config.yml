@@ -1,20 +1,20 @@
 # base config
-seed: 2023
-device: 'mps' # 'cuda'
+seed: 17771
+device: 'cuda' # 'cuda'
 num_workers: 0
 
 lr: 0.0001
 lr_drop: 400
 wd: 0.0001
 n_epoch: 200
-bsz: 32
+bsz: 2000
 eval_bsz: 100
 grad_clip: 0.1
 max_windows: 5
 clip_length: 1
 eval_epoch_interval: 1
 
-position_embedding: "rope"      # "sine", "v2", "learned", "rope", or "conv"
+position_embedding: "sine"      # "sine", "v2", "learned", "rope", or "conv"
 enc_layers: 2
 dec_layers: 2
 dim_feedforward: 1024
@@ -54,17 +54,17 @@ log_interval: 10              # Log training metrics every N steps/iterations
 # clotho-moment-specific config
 dset_name: clotho-moment
 clip_length: 1
-train_path: ../preprocessed/clotho_moment_valid_train.jsonl
-val_path: ../preprocessed/clotho_moment_valid_val.jsonl
-test_path: ../preprocessed/clotho_moment_valid_test.jsonl
+train_path: ../clotho_moment/preprocessed/clotho_moment_valid_train.jsonl
+val_path: ../clotho_moment/preprocessed/clotho_moment_valid_val.jsonl
+test_path: ../clotho_moment/preprocessed/clotho_moment_valid_test.jsonl
 submission_path: private/dcase2026_private.jsonl
 max_q_l: 32
 max_a_l: 300
 
 # feature-specific config 
 ctx_mode: audio_tef             # "audio", "tef", or "audio_tef" (Temporal Embeddings)
-a_feat_dir: ../clotho-moment/clap
-t_feat_dir: ../clotho-moment/clap_text
+a_feat_dir: ../clotho_moment/features/clotho-moment/clap
+t_feat_dir: ../clotho_moment/features/clotho-moment/clap_text
 a_sub_feat_dir: private/feature/clap
 t_sub_feat_dir: private/feature/clap_text
 a_feat_type: clap
