@@ -40,17 +40,30 @@ class PositionEmbeddingSine(nn.Module):
     """
 
     def __init__(
-        self, num_pos_feats=64, temperature=10000, normalize=False, scale=None
+        self,
+        num_pos_feats=64,
+        temperature=10000,
+        normalize=False,
+        scale=None,
+        mode="normal",
     ):
         super().__init__()
         self.num_pos_feats = num_pos_feats
         self.temperature = temperature
         self.normalize = normalize
+        self.mode = mode
         if scale is not None and normalize is False:
             raise ValueError("normalize should be True if scale is passed")
         if scale is None:
             scale = 2 * math.pi
         self.scale = scale
+
+        if self.mode == "adaptive":
+            dim_t = torch.arange(self.num_pos_feats, dtype=torch.float32)
+            inv_freq = 1.0 / (
+                self.temperature ** (2 * (dim_t // 2) / self.num_pos_feats)
+            )
+            self.inv_freq = nn.Parameter(inv_freq)
 
     def forward(self, x, mask):
         """
@@ -67,10 +80,14 @@ class PositionEmbeddingSine(nn.Module):
             eps = 1e-6
             x_embed = x_embed / (x_embed[:, -1:] + eps) * self.scale
 
-        dim_t = torch.arange(self.num_pos_feats, dtype=torch.float32, device=x.device)
-        dim_t = self.temperature ** (2 * (dim_t // 2) / self.num_pos_feats)
-
-        pos_x = x_embed[:, :, None] / dim_t  # (bsz, L, num_pos_feats)
+        if self.mode == "adaptive":
+            pos_x = x_embed[:, :, None] * self.inv_freq.to(x.device)
+        else:
+            dim_t = torch.arange(
+                self.num_pos_feats, dtype=torch.float32, device=x.device
+            )
+            dim_t = self.temperature ** (2 * (dim_t // 2) / self.num_pos_feats)
+            pos_x = x_embed[:, :, None] / dim_t  # (bsz, L, num_pos_feats)
         pos_x = torch.stack(
             (pos_x[:, :, 0::2].sin(), pos_x[:, :, 1::2].cos()), dim=3
         ).flatten(2)  # (bsz, L, num_pos_feats*2)
@@ -82,7 +99,14 @@ def build_position_encoding(args):
 
     if args.position_embedding in ("v2", "sine"):
         # Standard sinusoidal embedding
-        position_embedding = PositionEmbeddingSine(N_steps, normalize=True)
+        position_embedding = PositionEmbeddingSine(
+            N_steps, normalize=True, mode="normal"
+        )
+    elif args.position_embedding == "sine_adaptive":
+        # Learnable sinusoidal embedding
+        position_embedding = PositionEmbeddingSine(
+            N_steps, normalize=True, mode="adaptive"
+        )
     elif args.position_embedding == "learned":
         # Absolute learned positional embedding (2D version already defined)
         position_embedding = PositionEmbeddingLearned(N_steps)

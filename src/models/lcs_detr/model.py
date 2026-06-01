@@ -233,25 +233,54 @@ class LCSDETR(nn.Module):
 
         audio_length = src_aud.shape[1]
 
-        hs, reference, memory, memory_global = self.transformer(
-            src, ~mask, self.query_embed.weight, pos, audio_length
+        # Decouple the transformer to inject Saliency Amplifier before the Decoder
+        bs, seq_len, d = src.shape
+        src_t = src.permute(1, 0, 2)  # (L, batch_size, d)
+        pos_embed_t = pos.permute(1, 0, 2)  # (L, batch_size, d)
+
+        # 1. T2V Encoder (processes text + audio + global)
+        src_t = self.transformer.t2v_encoder(
+            src_t,
+            src_key_padding_mask=~mask,
+            pos=pos_embed_t,
+            audio_length=audio_length,
         )
 
-        # Apply Saliency Amplifier to audio memory
-        aud_mem = memory  # memory is already (bsz, L_aud, d)
-        aud_mem_amplified = self.saliency_amplifier(
-            features=aud_mem.transpose(0, 1),  # (L_aud, bsz, d)
+        # Strip text tokens
+        src_t = src_t[: audio_length + 1]
+        mask_enc = (~mask)[:, : audio_length + 1]
+        pos_embed_t = pos_embed_t[: audio_length + 1]
+
+        # 2. Audio Encoder (processes audio + global)
+        memory_t = self.transformer.encoder(
+            src_t, src_key_padding_mask=mask_enc, pos=pos_embed_t
+        )
+        memory_global, memory_local_t = memory_t[0], memory_t[1:]
+
+        # 3. Apply Saliency Amplifier on Audio Memory
+        # Keep un-amplified memory for saliency score calculation
+        aud_mem_unamplified = memory_local_t.transpose(0, 1)  # (batch_size, L_aud, d)
+
+        aud_mem_amplified_t = self.saliency_amplifier(
+            features=memory_local_t,  # (L_aud, bsz, d)
             saliency_scores=saliency_scores,
             pos=pos_aud.transpose(0, 1),  # (L_aud, bsz, d)
             aud_mask=src_aud_mask,
         )
-        aud_mem = aud_mem_amplified.transpose(0, 1)  # back to (bsz, L_aud, d)
 
-        # Re-construct memory with amplified audio features
-        # Note: hs is already computed, but if hs should be influenced by amplified memory,
-        # we might need to apply saliency_amplifier *before* the decoder.
-        # SG-DETR applies it after det_encoder (TransformerEncoder) and before query_selector / FPN / detr_head.
-        # We apply it to aud_mem which is used for saliency_scores computation below.
+        # 4. Decoder
+        mask_local = mask_enc[:, 1:]
+        pos_embed_local_t = pos_embed_t[1:]
+        refpoint_embed = self.query_embed.weight.unsqueeze(1).repeat(1, bs, 1)
+        tgt = torch.zeros(refpoint_embed.shape[0], bs, d, device=src.device)
+
+        hs, reference = self.transformer.decoder(
+            tgt,
+            aud_mem_amplified_t,  # Pass the amplified memory to the decoder!
+            memory_key_padding_mask=mask_local,
+            pos=pos_embed_local_t,
+            refpoints_unsigmoid=refpoint_embed,
+        )
 
         outputs_class = self.class_embed(
             hs
@@ -263,9 +292,8 @@ class LCSDETR(nn.Module):
             outputs_coord = outputs_coord.sigmoid()
         out = {"pred_logits": outputs_class[-1], "pred_spans": outputs_coord[-1]}
 
-        # aud_mem is already extracted above
-
         ### Neg Pairs ###
+        # Skip decoder for negative pairs to save massive compute
         src_txt_neg = torch.cat([src_txt[1:], src_txt[0:1]], dim=0)
         src_txt_mask_neg = torch.cat([src_txt_mask[1:], src_txt_mask[0:1]], dim=0)
         src_neg = torch.cat([src_aud, src_txt_neg], dim=1)
@@ -273,20 +301,35 @@ class LCSDETR(nn.Module):
 
         mask_neg = torch.cat([mask_, mask_neg], dim=1)
         src_neg = torch.cat([src_, src_neg], dim=1)
-        pos_neg = pos.clone()  # since it does not use actual content
+        pos_neg = pos.clone()
 
-        _, _, memory_neg, memory_global_neg = self.transformer(
-            src_neg, ~mask_neg, self.query_embed.weight, pos_neg, audio_length
+        src_neg_t = src_neg.permute(1, 0, 2)
+        pos_neg_t = pos_neg.permute(1, 0, 2)
+
+        src_neg_t = self.transformer.t2v_encoder(
+            src_neg_t,
+            src_key_padding_mask=~mask_neg,
+            pos=pos_neg_t,
+            audio_length=audio_length,
         )
-        aud_mem_neg = memory_neg[:, : src_aud.shape[1]]
+        src_neg_t = src_neg_t[: audio_length + 1]
+        mask_neg_enc = (~mask_neg)[:, : audio_length + 1]
+        pos_neg_t = pos_neg_t[: audio_length + 1]
+
+        memory_neg_t = self.transformer.encoder(
+            src_neg_t, src_key_padding_mask=mask_neg_enc, pos=pos_neg_t
+        )
+        memory_global_neg = memory_neg_t[0]
+        aud_mem_neg_unamplified = memory_neg_t[1:].transpose(0, 1)
 
         out["saliency_scores"] = torch.sum(
-            self.saliency_proj1(aud_mem)
+            self.saliency_proj1(aud_mem_unamplified)
             * self.saliency_proj2(memory_global).unsqueeze(1),
             dim=-1,
         ) / np.sqrt(self.hidden_dim)
+
         out["saliency_scores_neg"] = torch.sum(
-            self.saliency_proj1(aud_mem_neg)
+            self.saliency_proj1(aud_mem_neg_unamplified)
             * self.saliency_proj2(memory_global_neg).unsqueeze(1),
             dim=-1,
         ) / np.sqrt(self.hidden_dim)

@@ -11,11 +11,12 @@ class RotaryEmbedding(nn.Module):
         inv_freq = 1.0 / (base ** (torch.arange(0, dim, 2).float() / dim))
         self.register_buffer("inv_freq", inv_freq, persistent=False)
 
-    def forward(self, seq_len: int, device):
-        t = torch.arange(seq_len, device=device).type_as(self.inv_freq)
+    def forward(self, x, mask=None):
+        bsz, seq_len, _ = x.shape
+        t = torch.arange(seq_len, device=x.device).type_as(self.inv_freq)
         freqs = torch.outer(t, self.inv_freq)
-        emb = torch.cat((freqs, freqs), dim=-1)
-        return emb.cos(), emb.sin()
+        emb = torch.cat((freqs.sin(), freqs.cos()), dim=-1)
+        return emb.unsqueeze(0).expand(bsz, -1, -1)
 
 
 def apply_rotary_emb(x: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor):
