@@ -175,9 +175,10 @@ def train(model, criterion, optimizer, lr_scheduler, train_dataset, val_dataset,
 
     wandb_run_name = get_run_name(
         opt.model_name,
+        opt.dset_name,
         opt.lr,
         opt.bsz,
-        experiment_type=opt.get("experiment_type", "lcs_detr"),
+        experiment_type=opt.get("wandb_run_name", "baseline"),
         random_suffix=True,
         random_suffix_len=6,
     )
