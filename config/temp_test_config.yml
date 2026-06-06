@@ -1,5 +1,5 @@
 a_feat_dim: 768
-a_feat_dir: dataset/castella/clap
+a_feat_dir: dataset/clotho-moment/clap
 a_feat_type: clap
 a_sub_feat_dir: private/feature/clap
 aux_loss: true
@@ -11,7 +11,7 @@ dec_layers: 2
 device: cpu
 dim_feedforward: 1024
 dropout: 0.1
-dset_name: castella
+dset_name: clotho-moment
 ema_decay: 0.9
 enc_layers: 2
 eos_coef: 0.1
@@ -48,11 +48,11 @@ span_loss_coef: 10
 span_loss_type: l1
 submission_path: private/dcase2026_private.jsonl
 t_feat_dim: 768
-t_feat_dir: dataset/castella/clap_text
+t_feat_dir: dataset/clotho-moment/clap_text
 t_feat_type: clap
 t_sub_feat_dir: private/feature/clap_text
-test_path: dataset/preprocessed/castella_test_release.jsonl
+test_path: dataset/preprocessed/clotho_moment_valid_test.jsonl
 train_log_filename: train.log
-train_path: dataset/preprocessed/castella_dummy_train.jsonl
-val_path: dataset/preprocessed/castella_dummy_val.jsonl
+train_path: dataset/preprocessed/clotho_moment_valid_train.jsonl
+val_path: dataset/preprocessed/clotho_moment_valid_val.jsonl
 wd: 0.0001
