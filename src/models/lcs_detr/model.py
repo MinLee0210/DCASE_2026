@@ -48,6 +48,7 @@ class LCSDETR(nn.Module):
         n_input_proj=2,
         use_saliency_conv=False,
         use_global_query_init=False,
+        use_saliency_refinement=False,
     ):
         """Initializes the model.
         Parameters:
@@ -169,6 +170,14 @@ class LCSDETR(nn.Module):
         if use_global_query_init:
             self.query_init_proj = nn.Linear(hidden_dim, hidden_dim)
 
+        self.use_saliency_refinement = use_saliency_refinement
+        if use_saliency_refinement:
+            self.saliency_refinement_proj = nn.Sequential(
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.ReLU(inplace=True),
+                nn.Linear(hidden_dim, 1)
+            )
+
     def forward(self, src_txt, src_txt_mask, src_aud, src_aud_mask):
         """The forward expects two tensors:
            - src_txt: [batch_size, L_txt, D_txt]
@@ -217,6 +226,11 @@ class LCSDETR(nn.Module):
             batch_audio_len=audio_length,
             saliency_scores=torch.sigmoid(saliency_scores),
         )
+
+        if self.use_saliency_refinement:
+            src_aud_fused = src_updated[:, :audio_length]
+            saliency_delta = self.saliency_refinement_proj(src_aud_fused).squeeze(-1)
+            saliency_scores = saliency_scores + saliency_delta
 
         src = src_updated
         mask = mask_updated
@@ -432,6 +446,7 @@ def build_model(args):
         n_input_proj=args.n_input_proj,
         use_saliency_conv=args.get("use_saliency_conv", False),
         use_global_query_init=args.get("use_global_query_init", False),
+        use_saliency_refinement=args.get("use_saliency_refinement", False),
     )
 
     matcher = build_matcher(args)

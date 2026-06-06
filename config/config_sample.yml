@@ -82,3 +82,4 @@ use_flash_attention: False      # True/False: Enables FlashMultiheadAttention (r
 lr_scheduler_type: "cosine"     # "cosine" (CosineAnnealingLR) or "step" (StepLR)
 use_saliency_conv: true
 use_global_query_init: true     # If True, initializes decoder query content using projected global token instead of zeros
+use_saliency_refinement: true   # If True, refines early saliency scores using fused cross-attention features before the amplifier
