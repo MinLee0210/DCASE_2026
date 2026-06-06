@@ -47,6 +47,7 @@ class LCSDETR(nn.Module):
         use_txt_pos=False,
         n_input_proj=2,
         use_saliency_conv=False,
+        use_global_query_init=False,
     ):
         """Initializes the model.
         Parameters:
@@ -164,6 +165,10 @@ class LCSDETR(nn.Module):
             use_mha=True,
         )
 
+        self.use_global_query_init = use_global_query_init
+        if use_global_query_init:
+            self.query_init_proj = nn.Linear(hidden_dim, hidden_dim)
+
     def forward(self, src_txt, src_txt_mask, src_aud, src_aud_mask):
         """The forward expects two tensors:
            - src_txt: [batch_size, L_txt, D_txt]
@@ -272,7 +277,10 @@ class LCSDETR(nn.Module):
         mask_local = mask_enc[:, 1:]
         pos_embed_local_t = pos_embed_t[1:]
         refpoint_embed = self.query_embed.weight.unsqueeze(1).repeat(1, bs, 1)
-        tgt = torch.zeros(refpoint_embed.shape[0], bs, d, device=src.device)
+        if self.use_global_query_init:
+            tgt = self.query_init_proj(memory_global).unsqueeze(0).repeat(refpoint_embed.shape[0], 1, 1)
+        else:
+            tgt = torch.zeros(refpoint_embed.shape[0], bs, d, device=src.device)
 
         hs, reference = self.transformer.decoder(
             tgt,
@@ -423,6 +431,7 @@ def build_model(args):
         span_loss_type=args.span_loss_type,
         n_input_proj=args.n_input_proj,
         use_saliency_conv=args.get("use_saliency_conv", False),
+        use_global_query_init=args.get("use_global_query_init", False),
     )
 
     matcher = build_matcher(args)
