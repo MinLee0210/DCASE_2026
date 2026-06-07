@@ -1,7 +1,7 @@
 # base config
 seed: 17771
 device: 'cuda' # 'cuda'
-num_workers: 0
+num_workers: 6
 
 lr: 0.0001
 lr_drop: 400
