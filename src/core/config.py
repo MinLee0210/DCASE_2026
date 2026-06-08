@@ -15,8 +15,8 @@ under the License.
 """
 
 import os
-import yaml
 
+import yaml
 from easydict import EasyDict
 
 GLOBAL_OPT = None

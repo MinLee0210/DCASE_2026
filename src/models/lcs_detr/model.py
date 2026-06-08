@@ -1,18 +1,16 @@
+import numpy as np
 import torch
 import torch.nn.functional as F
-import numpy as np
 from torch import nn
 
+from src.models.components.positional_encoding.base import \
+    build_position_encoding
+from src.models.components.transformer.encoder import (LocalSaliencyHead,
+                                                       SaliencyAmplifier,
+                                                       Text2AudioEncoder)
+from src.models.lcs_detr.criterion import SetCriterion
 from src.models.lcs_detr.matcher import build_matcher
 from src.models.lcs_detr.transformer import build_transformer
-from src.models.components.positional_encoding.base import build_position_encoding
-from src.models.lcs_detr.criterion import SetCriterion
-
-from src.models.components.transformer.encoder import (
-    LocalSaliencyHead,
-    Text2AudioEncoder,
-    SaliencyAmplifier,
-)
 
 
 def inverse_sigmoid(x, eps=1e-3):

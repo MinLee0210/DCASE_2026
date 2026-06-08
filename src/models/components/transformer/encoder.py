@@ -9,21 +9,15 @@ import torch.nn.functional as F
 from torch import Tensor
 from torch.nn import functional as func
 
+from src.models.components.audio.pooling import (GlobalMaxPooling,
+                                                 GlobalMeanPooling,
+                                                 GRUFeatureExtractor,
+                                                 LearnedAggregation,
+                                                 LearnedAggregationLayer)
 from src.models.components.transformer.layers import (
-    T2ATransformerEncoderLayer,
-    TransformerEncoderLayer,
-)
-from src.models.components.audio.pooling import (
-    GlobalMaxPooling,
-    GlobalMeanPooling,
-    GRUFeatureExtractor,
-    LearnedAggregation,
-    LearnedAggregationLayer,
-)
-from src.models.components.utils.schemas import (
-    MomentEncoderOutput,
-    SentenceEncoderOutput,
-)
+    T2ATransformerEncoderLayer, TransformerEncoderLayer)
+from src.models.components.utils.schemas import (MomentEncoderOutput,
+                                                 SentenceEncoderOutput)
 from src.models.components.utils.stacker import get_clones
 from src.utils.span_utils import span_cxw_to_xx
 

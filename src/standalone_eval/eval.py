@@ -36,19 +36,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
-import numpy as np
-from collections import OrderedDict, defaultdict
-import json
-import time
 import copy
+import json
 import multiprocessing as mp
-from src.standalone_eval.utils import (
-    compute_average_precision_detection,
-    compute_temporal_iou_batch_cross,
-    compute_temporal_iou_batch_paired,
-    load_jsonl,
-    get_ap,
-)
+import time
+from collections import OrderedDict, defaultdict
+
+import numpy as np
+
+from src.standalone_eval.utils import (compute_average_precision_detection,
+                                       compute_temporal_iou_batch_cross,
+                                       compute_temporal_iou_batch_paired,
+                                       get_ap, load_jsonl)
 
 
 def compute_average_precision_detection_wrapper(

@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-
 # pyrefly: ignore [missing-import]
 from mamba_ssm import Mamba
 

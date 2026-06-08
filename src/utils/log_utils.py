@@ -1,6 +1,32 @@
-import time
 import json
+import logging
+import time
+
+from tqdm import tqdm
+
 import wandb
+
+
+class TqdmLoggingHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            msg = self.format(record)
+            tqdm.write(msg)
+            self.flush()
+        except Exception:
+            self.handleError(record)
+
+
+def setup_tqdm_logging(level=logging.INFO):
+    tqdm_handler = TqdmLoggingHandler()
+    tqdm_handler.setFormatter(
+        logging.Formatter(
+            fmt="%(asctime)s.%(msecs)03d:%(levelname)s:%(name)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+    )
+    logging.basicConfig(level=level, handlers=[tqdm_handler])
+
 
 
 def write_log(opt, epoch_i: int, loss_meters, metrics=None, mode="train"):

@@ -3,9 +3,8 @@
 import torch
 from torch import Tensor, nn
 
-from src.models.components.attention.dab_attention import (
-    FlashMultiheadAttention as DABMultiheadAttention,
-)
+from src.models.components.attention.dab_attention import \
+    FlashMultiheadAttention as DABMultiheadAttention
 from src.models.components.transformer.feed_forward import FeedForwardNetwork
 from src.models.components.utils.stacker import get_clones
 

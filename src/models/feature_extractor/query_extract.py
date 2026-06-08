@@ -3,7 +3,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-
 # pyrefly: ignore [missing-import]
 from msclap import CLAP
 from tqdm import tqdm

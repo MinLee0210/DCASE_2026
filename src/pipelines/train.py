@@ -1,42 +1,33 @@
+import argparse
+import copy
 import os
 import pprint
 import random
-import argparse
-import copy
-import numpy as np
-from tqdm.auto import tqdm, trange
+import sys
 from collections import defaultdict
 
+import numpy as np
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-
 from easydict import EasyDict
-
-import sys
+from torch.utils.data import DataLoader
+from tqdm import tqdm, trange
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.core.config import BaseOptions
-from src.data.dataset import StartEndDataset, start_end_collate, prepare_batch_inputs
-from src.pipelines.evaluate import eval_epoch, setup_model
-
-from src.utils.basic_utils import (
-    AverageMeter,
-    save_checkpoint,
-    rename_latest_to_best,
-)
-from src.utils.log_utils import write_log, WandbLogger
-from src.utils.model_utils import count_parameters, ModelEMA, get_run_name
-
 import logging
 
+from src.core.config import BaseOptions
+from src.data.dataset import (StartEndDataset, prepare_batch_inputs,
+                              start_end_collate)
+from src.pipelines.evaluate import eval_epoch, setup_model
+from src.utils.basic_utils import (AverageMeter, rename_latest_to_best,
+                                   save_checkpoint)
+from src.utils.log_utils import WandbLogger, setup_tqdm_logging, write_log
+from src.utils.model_utils import ModelEMA, count_parameters, get_run_name
+
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    format="%(asctime)s.%(msecs)03d:%(levelname)s:%(name)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    level=logging.INFO,
-)
+setup_tqdm_logging()
 
 
 def set_seed(seed, use_cuda=True):

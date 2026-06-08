@@ -1,23 +1,18 @@
-from typing import Optional
+import warnings
+from typing import Optional, Tuple
 
 import torch
 from torch import Tensor
-
-import warnings
-from typing import Tuple
-
-
-from torch.nn.modules.linear import Linear
 from torch.nn.init import constant_
-
+from torch.nn.modules.linear import Linear
 from torch.nn.modules.module import Module
 
 try:
-    from torch.overrides import has_torch_function, handle_torch_function
+    from torch.overrides import handle_torch_function, has_torch_function
 except ImportError:
     from torch._overrides import has_torch_function, handle_torch_function
 
-from torch.nn.functional import linear, pad, softmax, dropout
+from torch.nn.functional import dropout, linear, pad, softmax
 
 
 class MultiheadAttention(Module):

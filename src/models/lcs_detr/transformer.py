@@ -1,10 +1,11 @@
 import copy
+import math
 from typing import Optional
 
 import torch
 import torch.nn.functional as F
-from torch import nn, Tensor
-import math
+from torch import Tensor, nn
+
 from src.models.components.attention.multi_head import MultiheadAttention
 
 

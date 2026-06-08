@@ -5,11 +5,10 @@ from typing import List, Optional, Tuple
 import torch
 from torch import Tensor, nn
 
+from src.models.components.positional_encoding.dab_pos_encoding import \
+    gen_sineembed_for_position
 from src.models.components.transformer.feed_forward import SlimMLP
 from src.models.components.transformer.layers import TransformerDecoderLayer
-from src.models.components.positional_encoding.dab_pos_encoding import (
-    gen_sineembed_for_position,
-)
 from src.models.components.utils.model_utils import inverse_sigmoid
 from src.models.components.utils.stacker import get_clones
 

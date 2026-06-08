@@ -1,6 +1,7 @@
 # cross_modal_fusion.py
 import torch
 import torch.nn as nn
+
 from src.models.components.attention.multi_head import MultiheadAttention
 
 

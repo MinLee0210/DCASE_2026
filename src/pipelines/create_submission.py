@@ -1,29 +1,28 @@
 import argparse
-
-from tqdm.auto import tqdm
 import os
-from easydict import EasyDict
-
 import sys
+
+from easydict import EasyDict
+from tqdm.auto import tqdm
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from src.utils.span_utils import span_cxw_to_xx
 
-from src.core.config import BaseOptions
+
+import logging
 
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from src.data.dataset import StartEndDataset, start_end_collate, prepare_batch_inputs
+from src.core.config import BaseOptions
+from src.data.dataset import (StartEndDataset, prepare_batch_inputs,
+                              start_end_collate)
+from src.models.lcs_detr.model import build_model as build_model_lcs_detr
 from src.models.lcs_detr.postprocessing import PostProcessorDETR
 from src.standalone_eval.eval import eval_submission
-
-from src.utils.basic_utils import save_jsonl, save_json
-from src.models.lcs_detr.model import build_model as build_model_lcs_detr
-
-import logging
+from src.utils.basic_utils import save_json, save_jsonl
+from src.utils.span_utils import span_cxw_to_xx
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(

@@ -5,10 +5,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import torch
+from torch.utils.data import Dataset
+
 from src.utils.basic_utils import l2_normalize_np_array, load_jsonl
 from src.utils.span_utils import span_xx_to_cxw
 from src.utils.tensor_utils import pad_sequences_1d
-from torch.utils.data import Dataset
 
 logger = logging.getLogger(__name__)
 
