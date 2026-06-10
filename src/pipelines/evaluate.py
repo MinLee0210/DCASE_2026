@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 from easydict import EasyDict
 from torch.utils.data import DataLoader
-from tqdm import tqdm
+from tqdm.auto import tqdm
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 

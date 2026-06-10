@@ -42,7 +42,7 @@ eval_log_filename: val.log
 eval_split_name: val            # "val", "test", or "private"
 aux_loss: True
 
-model_ema: False
+model_ema: True
 ema_decay: 0.9
 results_dir: results_pretraining
 
@@ -52,7 +52,7 @@ wandb_run_name: "lcs_detr_enhanced"
 log_interval: 10              # Log training metrics every N steps/iterations
 
 # clotho-moment-specific config
-dset_name: clotho-moment
+dset_name: clotho-moment_castella
 clip_length: 1
 train_path: ../world_dataset/preprocessed/world_train_release.jsonl
 val_path: ../world_dataset/preprocessed/world_val_release.jsonl
