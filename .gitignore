@@ -216,7 +216,6 @@ __marimo__/
 
 dataset/
 configs/baseline/*
-archived/
+# archived/
 
-results*/
 wandb/
