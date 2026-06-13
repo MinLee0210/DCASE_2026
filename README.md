@@ -4,9 +4,13 @@ Repository for participating in the [DCASE 2026 Challenge](https://dcase.communi
 
 ## Model Architecture
 
-LCS-DETR extends [SG-DETR](https://arxiv.org/pdf/2410.01615v1) with two key mechanisms for audio moment retrieval: (1) **saliency gating** via cross-modal cosine similarity to focus on relevant audio frames, and (2) **local temporal continuity** via depthwise-separable convolution to smooth temporal dependencies.
+![model_arch](./docs/lcs_detr.png)
 
-Given an audio-text pair, [CLAP](https://github.com/microsoft/CLAP) extracts aligned embeddings. Saliency-weighted features pass through a Transformer encoder-decoder (2 layers each, 8 attention heads) with 10 learnable queries. The model outputs span predictions (center, width) with confidence scores via span regression and binary classification heads, optimized with Focal Loss and GIoU.
+LCS-DETR extends [SG-DETR](https://arxiv.org/pdf/2410.01615v1) and QD-DETR with several key mechanisms for robust audio moment retrieval:
+
+1. **Local Continuity Saliency (LCS):** Standard DETR relies on Cross-Attention between Text and Audio tokens. Given our 2Hz sampling rate, a standard transformer layer struggles to capture fine-grained temporal dependencies. LCS introduces a lightweight 1D Convolutional layer (e.g., `Conv1D(GELU(DWConv5(A))) + A`) directly on the Audio Encoder outputs before Cross-Attention. This forces the model to learn short-term temporal continuity (like the start of a sound fading into its peak), allowing it to better "see" the shape of the sound event when attending to text.
+2. **Saliency-Guided Cross Attention:** The Saliency Amplifier decouples the Transformer into `Encoder -> SaliencyAmplifier -> Decoder`. Bounding box queries directly attend to saliency-amplified features, improving semantic focus.
+3. **Adaptive Positional Encoding:** We use an `adaptive` mode for Sine positional embeddings (`position_embedding: sine_adaptive`), wrapping static frequency bands in learnable parameters so the model can stretch and compress sinusoidal periods to match DCASE audio dynamics.
 
 ## Usage
 

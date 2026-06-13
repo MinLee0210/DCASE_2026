@@ -10,9 +10,6 @@
 
 - The baseline is quite clear for the idea of semantic search; but it could be a situation that ... we can try to use the AST model first for segment, the embed all text query, then sim-search in those text query, and get relevant segments. => This will be my first baseline.
 
-## ...
-
-- Count min, max, avg no. of words in each captions => If the number is reasonable, we can use another small language model (SmolLM) to generate more augmented-captions for each audio.
 
 ## 01/06/2026 (Architecture & Positional Encoding Refactoring)
 
@@ -24,8 +21,65 @@
 - **Optimized Negative Pairs Compute**: Bypassed the heavy 6-layer Decoder during the contrastive negative pairs generation, as only the Encoder outputs (`memory_neg`) are actually used for the negative saliency score loss. Saves ~35% VRAM and computation time.
 
 
+## Academic Report Architecture (Simplified)
 
-## 06/06/2026
+```mermaid
+graph LR
+    %% Styling classes for a clean academic look
+    classDef input fill:#ffffff,stroke:#000000,stroke-width:1px,stroke-dasharray: 5 5;
+    classDef core fill:#f0f8ff,stroke:#000000,stroke-width:1px;
+    classDef saliency fill:#fff0f5,stroke:#000000,stroke-width:1px;
+    classDef output fill:#ffffff,stroke:#000000,stroke-width:2px;
+
+    %% Nodes
+    AudIn("Audio Waveform"):::input
+    TxtIn("Text Query"):::input
+
+    subgraph Feature_Extraction ["Feature Extraction"]
+        direction TB
+        AudEnc["Audio Encoder (CLAP)"]:::core
+        TxtEnc["Text Encoder (CLAP)"]:::core
+    end
+
+    subgraph Saliency_Processing ["Saliency Processing"]
+        direction TB
+        LCS["Local Continuity Saliency (1D Conv)"]:::saliency
+        SalHead["Saliency Head (Cosine Sim)"]:::saliency
+    end
+
+    subgraph DETR_Architecture ["DETR Architecture"]
+        direction TB
+        T2VEnc["Joint T2V Encoder"]:::core
+        SalAmp["Saliency Amplifier"]:::saliency
+        DABDec["DAB-DETR Decoder"]:::core
+    end
+
+    OutSpan["Span (Center, Width)"]:::output
+    OutConf["Confidence Score"]:::output
+
+    %% Connections
+    AudIn --> AudEnc
+    TxtIn --> TxtEnc
+
+    AudEnc --> LCS
+    LCS --> SalHead
+    TxtEnc --> SalHead
+
+    LCS --> T2VEnc
+    TxtEnc --> T2VEnc
+    SalHead -.->|"Saliency Weights"| T2VEnc
+
+    T2VEnc --> SalAmp
+    SalHead -.->|"Saliency Weights"| SalAmp
+
+    SalAmp --> DABDec
+    
+    DABDec --> OutSpan
+    DABDec --> OutConf
+```
+
+
+### Architecture Pipeline
 
 ```mermaid
 graph TB
