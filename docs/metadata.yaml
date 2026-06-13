@@ -1,0 +1,91 @@
+submission:
+    # Submission label
+    # The label is used to index submissions.
+    # Generate your label following way to avoid overlapping codes among submissions:
+    # [Last name of corresponding author]_[Abbreviation of institute of the corresponding author]_task[task number]_[index number of your submission (1-4)]
+    label: LeDucMinh_VGU_task6_1
+    #
+    # Submission name
+    # This name will be used in the results tables when space permits
+    name: Local Continuity Saliency DETR
+    #
+    # Submission name abbreviated
+    # This abbreviated name will be used in the result table when space is tight.
+    # Use maximum 10 characters.
+    abbreviation: LCS-DETR
+
+    # Authors of the submitted system.
+    # Mark authors in the order you want them to appear in submission lists.
+    # One of the authors has to be marked as corresponding author,
+    # this will be listed next to the submission in the results tables.
+    authors:
+        # First author
+        -   lastname: Minh
+            firstname: Le Duc
+            email: minh.leduc.0210@gmail.com                 # Contact email address
+            corresponding: true                         # Mark true for one of the authors
+
+            # Affiliation information for the author
+            affiliation:
+                abbreviation: VGU
+                institute: Vietnamese-German University
+                department: Department of Computer Science
+                location: Binh Duong, Vietnam
+
+        # Second author
+        -   lastname: Anh
+            firstname: Nguyen Tran Van
+            email: tnvananh1802@gmail.com
+
+            affiliation:
+                abbreviation: HCMUS
+                institute: Ho Chi Minh City University of Science
+                department: Faculty of Mathematics and Computer Science
+                location: Ho Chi Minh City, Vietnam
+
+# System information
+system:
+    model:
+        # Describe the model architecture of your system.
+        # If your system is an ensemble of multiple models, please describe all models used in the system.
+        audio_models: [
+          MS-CLAP,
+        ]
+        text_models: [
+          MS-CLAP
+        ]
+        # If you use audio llms, such as Qwen2-audio, please specify the number of trainable and freezed parameters.
+        LLMs: []
+        # Describe the number of trainable parameters in your system.
+        trainable_parameters: 9.9 M
+        # Describe the number of freezed parameters in your system, if any.
+        freezed_parameters: 0 M
+        loss_function: [
+          "L1 Loss",
+          "Temporal DIoU Loss",
+          "Quality Focal Loss",
+          "Saliency Contrastive Loss"
+        ]
+
+    dataset:
+        # If you use data augmentation, please specify the data augmentation methods used in your system.
+        data_augmentation: !!null
+        # If you use external data resources except for the provided dataset (i.e., CASTELLA and Clotho-Moment), please specify the name of the data resources used in your system.
+        external_data_resources: [ 
+            
+        ]
+        # Describe the number of audio-caption pairs used for training your system.
+        audio_captions: 31643
+
+    ensemble: false
+
+# System results
+results:
+    development_testing:
+        # System results for the development-testing split.
+        # Report Recall1@0.5 and Recall1@0.7 for the CASTELLA test set.
+        # Full results are not mandatory, however, they are highly recommended as they are needed for through analysis of the challenge submissions.
+        # If you are unable to provide all results, also incomplete results can be reported.
+        Recall1@0.7: 73.08
+        Recall1@0.5: 80.29
+
